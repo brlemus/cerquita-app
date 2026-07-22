@@ -1,29 +1,32 @@
-# Cerquita — Plan de la App Mobile (customer) v1
+# Cerquita — Plan de la App Mobile v1
 
-App móvil de Cerquita, **solo customer** (owner/admin vive en un repo web
-aparte, fuera de este backlog). Consume `cerquita-api` (NestJS, en
-producción) según `docs/API_CONTRACT.md` — el contrato está fijado, esta
-app se adapta a él. Diseño importado de Claude Design (`docs/design/`,
-tokens en `docs/design/TOKENS.md`).
+App móvil de Cerquita. El MVP (Fases 0-9) es **customer puro**; a partir de
+ahí la misma app suma un **modo owner** para dueños de negocio (ver
+"Re-alcance: modo owner" más abajo) — el repo web queda acotado a **solo el
+panel de super-admin**, no a owner/admin en general como se asumía
+originalmente. Consume `cerquita-api` (NestJS, en producción) según
+`docs/API_CONTRACT.md` — el contrato está fijado, esta app se adapta a él.
+Diseño importado de Claude Design (`docs/design/`, tokens en
+`docs/design/TOKENS.md`).
 
 ## Stack (cerrado)
 
-| Área | Elección | Justificación (1 línea) |
-|---|---|---|
-| Framework | Expo (managed workflow + dev client) + TypeScript strict | decidido — mejor DX de RN hoy, `expo-*` cubre la mayoría de necesidades nativas sin eyectar |
-| Navegación | **Expo Router** | file-based, deep-linking y tipado de rutas nativos de Expo, cero configuración extra sobre lo que ya trae el framework |
-| Data-fetching / server-state (cache) | **TanStack Query** | es la capa de cache con invalidación que pide la arquitectura; maneja `ETag`/304 del polling y cancela requests al desmontar sin código propio |
-| Estado de cliente (sesión + carrito) | **Zustand** | selectors granulares — el carrito cambia en cada tap sin re-renderizar pantallas que no lo leen; sin el boilerplate de Redux |
-| Formularios | **react-hook-form + zod** | inputs no controlados = menos re-render; los schemas zod espejan 1:1 las validaciones del DTO del backend (`docs/API_CONTRACT.md`) |
-| Auth | **@clerk/clerk-expo** | SDK oficial de Clerk para Expo; `tokenCache` respaldado por `expo-secure-store` (patrón documentado) |
-| Push | **@react-native-firebase/messaging** | ver nota de riesgo técnico en Fase 5 — necesario para obtener un FCM token real en iOS, no solo Android |
-| Storage | **expo-secure-store** (tokens, vía Clerk) / **AsyncStorage** (flags no sensibles, ej. "vio onboarding") | tokens NUNCA en storage plano — regla dura |
-| Imágenes | **expo-image** | cache en disco/memoria automático — requisito de performance |
-| Listas | **FlashList** | virtualización real; ninguna lista (negocios, productos, pedidos) se renderiza con `.map` o `FlatList` sin ella |
-| Ubicación (dirección) | **expo-location** | GPS + reverse geocoding; sin mapa interactivo por decisión de producto (ver Fase 4) — cero dependencias nativas extra |
-| Testing | **Jest + jest-expo + React Native Testing Library** | decidido en `CLAUDE.md` |
-| Iconos | **react-native-svg** (ya incluido por Expo), SVGs a medida traducidos del diseño | el prototipo no usa una librería de íconos — sumar una sería una dependencia sin necesidad real |
-| Estilos | **Theme propio** (`src/shared/ui/theme.ts`) derivado de `docs/design/TOKENS.md` | el diseño es simple (cards, botones, inputs custom) — no justifica el costo/tamaño de una librería de componentes pesada |
+| Área                                 | Elección                                                                                                | Justificación (1 línea)                                                                                                                        |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Framework                            | Expo (managed workflow + dev client) + TypeScript strict                                                | decidido — mejor DX de RN hoy, `expo-*` cubre la mayoría de necesidades nativas sin eyectar                                                    |
+| Navegación                           | **Expo Router**                                                                                         | file-based, deep-linking y tipado de rutas nativos de Expo, cero configuración extra sobre lo que ya trae el framework                         |
+| Data-fetching / server-state (cache) | **TanStack Query**                                                                                      | es la capa de cache con invalidación que pide la arquitectura; maneja `ETag`/304 del polling y cancela requests al desmontar sin código propio |
+| Estado de cliente (sesión + carrito) | **Zustand**                                                                                             | selectors granulares — el carrito cambia en cada tap sin re-renderizar pantallas que no lo leen; sin el boilerplate de Redux                   |
+| Formularios                          | **react-hook-form + zod**                                                                               | inputs no controlados = menos re-render; los schemas zod espejan 1:1 las validaciones del DTO del backend (`docs/API_CONTRACT.md`)             |
+| Auth                                 | **@clerk/clerk-expo**                                                                                   | SDK oficial de Clerk para Expo; `tokenCache` respaldado por `expo-secure-store` (patrón documentado)                                           |
+| Push                                 | **@react-native-firebase/messaging**                                                                    | ver nota de riesgo técnico en Fase 5 — necesario para obtener un FCM token real en iOS, no solo Android                                        |
+| Storage                              | **expo-secure-store** (tokens, vía Clerk) / **AsyncStorage** (flags no sensibles, ej. "vio onboarding") | tokens NUNCA en storage plano — regla dura                                                                                                     |
+| Imágenes                             | **expo-image**                                                                                          | cache en disco/memoria automático — requisito de performance                                                                                   |
+| Listas                               | **FlashList**                                                                                           | virtualización real; ninguna lista (negocios, productos, pedidos) se renderiza con `.map` o `FlatList` sin ella                                |
+| Ubicación (dirección)                | **expo-location**                                                                                       | GPS + reverse geocoding; sin mapa interactivo por decisión de producto (ver Fase 4) — cero dependencias nativas extra                          |
+| Testing                              | **Jest + jest-expo + React Native Testing Library**                                                     | decidido en `CLAUDE.md`                                                                                                                        |
+| Iconos                               | **react-native-svg** (ya incluido por Expo), SVGs a medida traducidos del diseño                        | el prototipo no usa una librería de íconos — sumar una sería una dependencia sin necesidad real                                                |
+| Estilos                              | **Theme propio** (`src/shared/ui/theme.ts`) derivado de `docs/design/TOKENS.md`                         | el diseño es simple (cards, botones, inputs custom) — no justifica el costo/tamaño de una librería de componentes pesada                       |
 
 **Riesgos de compatibilidad señalados**: el push en iOS requiere una
 librería nativa (`@react-native-firebase/messaging`) y por lo tanto un
@@ -57,6 +60,7 @@ Sin `components/` ni `hooks/` globales sueltos — un componente se extrae a
 `shared/ui` recién cuando se repite entre 2+ features, no antes.
 
 **API client** (`shared/api/client.ts`) es la única puerta al backend:
+
 - Base URL desde `app.config.ts` (por entorno), nunca hardcodeada.
 - Inyecta `Authorization: Bearer <token>` leyendo el token de Clerk.
 - Inyecta `Idempotency-Key` en `POST /orders` (UUID generado por intento
@@ -158,18 +162,18 @@ MVP (no como parche final):
 
 ## Fases (una por PR)
 
-| Fase | Entregable |
-|---|---|
-| **0 — Scaffold** | Expo + TS strict; ESLint/Prettier/Husky/lint-staged; **CI de GitHub Actions corriendo lint + typecheck + test en cada PR**; theme (`shared/ui/theme.ts`) derivado de `docs/design/TOKENS.md`; estructura de carpetas por feature; API client base (`shared/api/client.ts`) con manejo de `Authorization` y mapeo de errores del contrato (aún sin login real que lo alimente) |
-| **1 — Auth** | Integración `@clerk/clerk-expo`, pantallas Login/Register del diseño, `GET /auth/me` al arrancar sesión, manejo de `401` (refresh/redirect), `403 SUSPENDED` (pantalla de cuenta suspendida) y `409` de re-registro (misma pantalla) |
-| **2 — Marketplace** | Home, búsqueda, categorías, detalle de negocio, listado de productos — `FlashList` + `expo-image`, skeletons, estado vacío/error diseñados |
-| **3 — Detalle de producto + Carrito** | Selector de variantes, carrito con estado optimista (Zustand), badge de carrito |
-| **4 — Checkout** | CRUD de direcciones (captura por GPS + `expo-location`, fallback a entrada manual si se niega el permiso, campo de referencia/instrucciones como protagonista del formulario — no un extra), selección de dirección guardada, confirmación de pedido con `Idempotency-Key`, manejo de `409` por negocio cerrado/mínimo no alcanzado |
-| **5 — Tracking + Push** | Polling de `GET /orders/:id/status` respetando `ETag`/`If-None-Match`/304 y el límite de 30/min; registro/baja de device token en login/logout (`POST`/`DELETE /devices`). **Requiere development build desde esta fase** (ver riesgo técnico abajo) |
-| **6 — Historial + Reviews + Feedback** | Lista de pedidos, detalle, review post-`ENTREGADO` (una por pedido), formulario de feedback general |
-| **7 — Perfil + Borrado de cuenta** | Pantalla de perfil, borrado de cuenta vía Clerk (ver Store readiness), privacy policy accesible |
-| **8 — Hardening + Store readiness** | Checklist final de MASVS, accesibilidad (safe areas, touch targets, contraste), pantallas de permisos con contexto, ATT documentado como no-aplica, auditoría de logs sensibles |
-| **9 — Publicación** | Ver checklist al final de este documento |
+| Fase                                   | Entregable                                                                                                                                                                                                                                                                                                                                                                    |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **0 — Scaffold**                       | Expo + TS strict; ESLint/Prettier/Husky/lint-staged; **CI de GitHub Actions corriendo lint + typecheck + test en cada PR**; theme (`shared/ui/theme.ts`) derivado de `docs/design/TOKENS.md`; estructura de carpetas por feature; API client base (`shared/api/client.ts`) con manejo de `Authorization` y mapeo de errores del contrato (aún sin login real que lo alimente) |
+| **1 — Auth**                           | Integración `@clerk/clerk-expo`, pantallas Login/Register del diseño, `GET /auth/me` al arrancar sesión, manejo de `401` (refresh/redirect), `403 SUSPENDED` (pantalla de cuenta suspendida) y `409` de re-registro (misma pantalla)                                                                                                                                          |
+| **2 — Marketplace**                    | Home, búsqueda, categorías, detalle de negocio, listado de productos — `FlashList` + `expo-image`, skeletons, estado vacío/error diseñados                                                                                                                                                                                                                                    |
+| **3 — Detalle de producto + Carrito**  | Selector de variantes, carrito con estado optimista (Zustand), badge de carrito                                                                                                                                                                                                                                                                                               |
+| **4 — Checkout**                       | CRUD de direcciones (captura por GPS + `expo-location`, fallback a entrada manual si se niega el permiso, campo de referencia/instrucciones como protagonista del formulario — no un extra), selección de dirección guardada, confirmación de pedido con `Idempotency-Key`, manejo de `409` por negocio cerrado/mínimo no alcanzado                                           |
+| **5 — Tracking + Push**                | Polling de `GET /orders/:id/status` respetando `ETag`/`If-None-Match`/304 y el límite de 30/min; registro/baja de device token en login/logout (`POST`/`DELETE /devices`). **Requiere development build desde esta fase** (ver riesgo técnico abajo)                                                                                                                          |
+| **6 — Historial + Reviews + Feedback** | Lista de pedidos, detalle, review post-`ENTREGADO` (una por pedido), formulario de feedback general                                                                                                                                                                                                                                                                           |
+| **7 — Perfil + Borrado de cuenta**     | Pantalla de perfil, borrado de cuenta vía Clerk (ver Store readiness), privacy policy accesible                                                                                                                                                                                                                                                                               |
+| **8 — Hardening + Store readiness**    | Checklist final de MASVS, accesibilidad (safe areas, touch targets, contraste), pantallas de permisos con contexto, ATT documentado como no-aplica, auditoría de logs sensibles                                                                                                                                                                                               |
+| **9 — Publicación**                    | Ver checklist al final de este documento                                                                                                                                                                                                                                                                                                                                      |
 
 ### Riesgo técnico conocido — Fase 5 (push, iOS vs Android)
 
@@ -199,11 +203,43 @@ caminos distintos Android/iOS), con el entendido de que vos configurás
 las credenciales de Firebase/APNs antes de que la fase pueda probarse
 end-to-end en un device iOS real.
 
+## Re-alcance: modo owner (decisión post-Fase 1.5)
+
+**Cambio de alcance respecto a la v1 original de este documento**: el modo
+owner **sí vive en esta app**, en fases posteriores a las de customer
+(post-Fase 9 — números de fase TBD, se planifican recién cuando se lleguen a
+abordar, no ahora). El repo web deja de ser "owner/admin" en general y queda
+acotado a **solo el panel de super-admin**.
+
+A alto nivel (sin desglose de checkpoints todavía — eso es planificación de
+esas fases futuras):
+
+- **Alta de negocio desde Perfil**: auto-servicio contra el backend, que ya
+  soporta la promoción de un `User` a `BUSINESS_OWNER` (endpoints
+  `business/me/*`, ya en producción). Punto de entrada tipo "¿Tenés un
+  negocio?" en Perfil.
+- **Chooser post-login** ("¿Dónde querés entrar?"): solo aparece para
+  usuarios que ya tienen `businessId` (son owner). El diseño de esta
+  pantalla ya está en `docs/design/` (prototipo completo, incluye rol
+  chooser).
+- **Panel de pedidos entrantes** (owner): ver pedidos del propio negocio y
+  cambiar su estado (transiciones permitidas al actor `BUSINESS`, ver
+  `docs/API_CONTRACT.md` sección Orders).
+- **Catálogo básico** (owner): alta/edición simple de productos del propio
+  negocio.
+- **Toggle `isOpen`** (owner): contra `business/me/*`.
+
+**Sin cambios**: el registro sigue sin selector de rol — todo usuario nuevo
+nace `CUSTOMER` vía el flujo JIT del backend (decisión ya confirmada en
+Fase 1, ver `docs/phases/phase-1-auth.md`). La promoción a `BUSINESS_OWNER`
+pasa exclusivamente por el flujo de auto-servicio desde Perfil, nunca por un
+selector en el registro.
+
 ## Backlog post-MVP
 
 - Mapa interactivo con pin arrastrable para direcciones (`react-native-maps`
-  + Google Maps API key en Android) — si hay demanda real de ajustar el
-  pin más allá de "estoy parado acá + referencia en texto".
+  - Google Maps API key en Android) — si hay demanda real de ajustar el
+    pin más allá de "estoy parado acá + referencia en texto".
 - Favoritos / negocios recientes.
 - Notificaciones de promociones (opt-in separado del push transaccional
   de pedidos).
