@@ -6,6 +6,8 @@ import { getNextCursorParam } from '../api/pagination';
 export type UseBusinessesParams = {
   search?: string;
   platformCategoryId?: string | null;
+  /** Búsqueda: sin query todavía no tiene sentido pegarle al backend. */
+  enabled?: boolean;
 };
 
 /**
@@ -13,7 +15,11 @@ export type UseBusinessesParams = {
  * búsqueda debounced blanquee toda la lista a skeleton en cada tap -- la
  * página anterior queda mientras llega la nueva.
  */
-export function useBusinesses({ search, platformCategoryId }: UseBusinessesParams = {}) {
+export function useBusinesses({
+  search,
+  platformCategoryId,
+  enabled = true,
+}: UseBusinessesParams = {}) {
   const normalizedSearch = search?.trim() ?? '';
   const normalizedCategoryId = platformCategoryId ?? null;
 
@@ -33,5 +39,6 @@ export function useBusinesses({ search, platformCategoryId }: UseBusinessesParam
     initialPageParam: undefined as string | undefined,
     getNextPageParam: getNextCursorParam,
     placeholderData: keepPreviousData,
+    enabled,
   });
 }
