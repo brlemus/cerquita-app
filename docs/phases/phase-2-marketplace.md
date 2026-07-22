@@ -29,6 +29,39 @@
   fino de TanStack Query sin ramificación propia; la lógica no trivial ya
   está testeada en los wrappers de API y en `getNextCursorParam`).
   Typecheck + tests en verde (18 tests nuevos).
+- **Checkpoint D** — cerrado. `AvatarFallback` (logo real vía expo-image o
+  monograma de iniciales), `RatingBadge` ("★ 4.9 (128)" / pill "Nuevo"),
+  `ClosedPill`, `BusinessCard` + skeleton, `CategoryChips` (categorías
+  reales + chip "Todos"), `icons.tsx` (`SearchIcon`/`BackIcon`, extraídos
+  ya que se reusan en Search y en Business Detail). `HomeScreen` reemplaza
+  el placeholder (`app/(app)/index.tsx`): FlashList de negocios, chips,
+  barra de búsqueda no editable, pull-to-refresh, skeleton/empty/error,
+  botón de logout reubicado. `SearchScreen` (`app/(app)/search.tsx`):
+  input debounced (300ms), sin `KeyboardAwareScreen` (FlashList adentro
+  rompería la virtualización), estado de "sin query todavía" vs "sin
+  resultados". Ajuste chico a `useBusinesses`: nuevo param `enabled`
+  (Search no debe pegarle al backend con query vacía). Nota de producto:
+  el prototipo mostraba un rango ficticio de tiempo de entrega ("20-35
+  min") sin campo real que lo respalde -- se usa `prepTimeMinutes` tal
+  cual lo da el contrato (un número), no un rango inventado.
+- **Checkpoint E** — cerrado (implementado junto con D: `HomeScreen`/
+  `SearchScreen` ya navegaban a `/business/[businessId]`, y el
+  typed-routes de Expo Router no compila con una ruta que todavía no
+  existe -- se resolvió el orden real de dependencias en vez de fingir
+  que D podía cerrar solo). `ProductCard` + skeleton, `FloatingBackButton`
+  (extraído de entrada -- Search ya tenía `BackIcon`, Business Detail lo
+  necesita también con el mismo posicionamiento por `useSafeAreaInsets`),
+  `useCachedProduct` (sin red, lee de la cache de la infinite query de
+  productos). `BusinessDetailScreen`: cover con tint de marca uniforme,
+  logo tile overlapping, `RatingBadge`/`ClosedPill` reusados, banner de
+  `minOrderCents`, catálogo flat con FlashList, estados de vacío/error/
+  loading propios y del negocio. `ProductDetailScreen`: solo lectura,
+  grupos de variantes como chips informativos, sin selector ni "Agregar".
+  Rutas `app/(app)/business/[businessId]/index.tsx` y
+  `.../product/[productId].tsx`.
+  **Gate de cierre de fase**: `pnpm lint`, `pnpm exec tsc --noEmit`,
+  `pnpm test` (suite completa, 27 suites / 127 tests) y `expo-doctor`
+  (18/18) todos en verde.
 
 ## Context
 
