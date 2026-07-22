@@ -3,6 +3,7 @@ export { EmptyState, type EmptyStateProps } from './EmptyState';
 export { ErrorState, type ErrorStateProps } from './ErrorState';
 export { KeyboardAwareScreen, type KeyboardAwareScreenProps } from './KeyboardAwareScreen';
 export { Skeleton, type SkeletonProps } from './Skeleton';
+export { Stepper, type StepperProps } from './Stepper';
 export { Text, type TextProps } from './Text';
 export { TextField, type TextFieldProps } from './TextField';
 export {
