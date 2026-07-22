@@ -28,7 +28,7 @@ planificación (no estaban en el plan maestro):
 1. **Android exige permiso de ubicación para geocoding** — a diferencia
    de iOS, `Location.geocodeAsync`/`reverseGeocodeAsync` no funcionan en
    Android sin permiso foreground otorgado (documentado en los docs de
-   Expo). El nivel "municipio" de la escalera de direcciones NO puede
+   Expo). El nivel "departamento" de la escalera de direcciones NO puede
    depender de geocoding online — se resuelve con una tabla estática
    embebida (ver más abajo), que funciona igual en ambas plataformas sin
    permiso ni red.
@@ -86,19 +86,21 @@ el menos prominente.
    salta), se intenta un único `geocodeAsync(line)` sobre el texto tal
    cual lo escribió el usuario, como mejora oportunista — si resuelve, se
    usa esa coordenada. Si no hay resultado (o la plataforma no lo
-   permite), se revela el picker de municipio.
-3. **Piso garantizado — picker de municipio**: un `Picker`/selector
-   (nunca texto libre) sobre una tabla estática embebida de los
-   municipios de El Salvador. Elegir un municipio resuelve lat/lng al
-   instante — sin red, sin permiso, igual en ambas plataformas. Copy
-   siempre visible cuando se usa este nivel: "Ubicación aproximada — tu
-   referencia guía la entrega al repartidor".
-4. **No hay nivel 4.** Con la tabla estática, elegir un municipio SIEMPRE
-   resuelve una coordenada — no hay escenario de "ni el nivel grueso
-   funciona" (eso solo aplicaría a un geocoder de red, que descartamos).
-   El botón de guardar queda deshabilitado solo hasta que `line` tenga
-   contenido Y algún lat/lng esté resuelto por cualquiera de los 3
-   niveles.
+   permite), se revela el picker de departamento.
+3. **Piso garantizado — picker de departamento**: un `Picker`/selector
+   (nunca texto libre) sobre una tabla estática embebida de los 14
+   departamentos de El Salvador (ver ajuste de alcance más abajo — el
+   plan original decía "municipio", se ajustó a "departamento" por
+   disponibilidad real de datos verificables). Elegir un departamento
+   resuelve lat/lng al instante — sin red, sin permiso, igual en ambas
+   plataformas. Copy siempre visible cuando se usa este nivel: "Ubicación
+   aproximada — tu referencia guía la entrega al repartidor".
+4. **No hay nivel 4.** Con la tabla estática, elegir un departamento
+   SIEMPRE resuelve una coordenada — no hay escenario de "ni el nivel
+   grueso funciona" (eso solo aplicaría a un geocoder de red, que
+   descartamos). El botón de guardar queda deshabilitado solo hasta que
+   `line` tenga contenido Y algún lat/lng esté resuelto por cualquiera de
+   los 3 niveles.
 
 **Pantalla de permiso en contexto** (requisito del plan maestro, sección
 Store readiness): antes de pedir el permiso nativo, una tarjeta propia
@@ -113,16 +115,21 @@ resumen compacto ("Ubicación guardada") + link "Actualizar con GPS" que,
 si se toca, corre la misma escalera para sobrescribir lat/lng. Editar
 `line`/`instructions`/`label` no requiere tocar la ubicación.
 
-### Tabla estática de municipios
+### Tabla estática de departamentos (ajuste de alcance durante Checkpoint A)
 
-`src/features/checkout/data/elSalvadorMunicipios.ts` — módulo TS con
-`{ departamento, municipio, lat, lng }[]` para los municipios de El
-Salvador. **La coordenada de cada municipio se obtiene de una fuente
-pública verificable durante la implementación (no de memoria)** — cito
-la fuente exacta en un comentario del archivo, tal como pediste. Test
-trivial de integridad: sin duplicados (`departamento`+`municipio`),
-todas las coordenadas dentro del bounding box de El Salvador
-(aprox. lat 13.15–14.45, lng -90.15– -87.65).
+`src/features/checkout/data/elSalvadorDepartamentos.ts` — módulo TS con
+`{ departamento, cabecera, lat, lng }[]`. **Ajuste de alcance sobre el
+plan original** (de "municipio" a "departamento"): verificar coordenadas
+confiables para los ~262 municipios tradicionales (o los 44 distritos de
+la reforma 2021-2024, listado nuevo y sin fuentes consolidadas todavía)
+no es viable sin arriesgar precisión inventada. Las 14 cabeceras
+departamentales sí están verificadas una por una contra el infobox de
+Wikipedia de cada ciudad (consultado 2026-07-22, fuente citada en el
+archivo). El picker se presenta como "Departamento", no "Municipio" —
+la aproximación real que se puede garantizar hoy, copy honesto sobre la
+precisión real. Test trivial de integridad: 14 entradas, sin duplicados,
+todas las coordenadas dentro del bounding box de El Salvador (aprox. lat
+13.15–14.45, lng -90.15– -87.65).
 
 ### CRUD y pantallas
 
@@ -315,9 +322,9 @@ armó el carrito y se confirmó), no el camino principal.
 
 - Instalar `expo-location`, `expo-crypto` (`npx expo install`/`pnpm add`
   según corresponda), `expo-doctor` en verde.
-- `src/features/checkout/data/elSalvadorMunicipios.ts` (+ test de
-  integridad) — dato verificado contra una fuente pública durante la
-  implementación, citada en comentario.
+- `src/features/checkout/data/elSalvadorDepartamentos.ts` (+ test de
+  integridad) — 14 cabeceras departamentales, dato verificado contra
+  Wikipedia durante la implementación, citada en comentario.
 - `src/features/checkout/api/types.ts` (`Address`,
   `CreateAddressRequest`, `UpdateAddressRequest`).
 - `src/features/checkout/api/{getAddresses,createAddress,updateAddress,
@@ -325,14 +332,14 @@ deleteAddress,setDefaultAddress}.ts` — wrappers finos de `request<T>`,
   mismo patrón que `marketplace/api/`.
 - `src/features/checkout/hooks/{useAddresses,useCreateAddress,
 useUpdateAddress,useDeleteAddress,useSetDefaultAddress}.ts`.
-- Gate: typecheck + tests afectados (tabla de municipios). Sin
+- Gate: typecheck + tests afectados (tabla de departamentos). Sin
   verificación visual.
 
 ### Checkpoint B — Formulario y lista de direcciones
 
 - Componente de captura de ubicación (escalera de 3 niveles: GPS →
   geocoding oportunista de `line` donde la plataforma lo permite →
-  picker de municipio) con el estado de permiso-en-contexto.
+  picker de departamento) con el estado de permiso-en-contexto.
 - `src/features/checkout/schemas.ts` (`addressFormSchema`, zod).
 - `AddressFormScreen` (create + edit) — RHF, mismo patrón que
   `SignUpScreen`.
@@ -341,7 +348,7 @@ useUpdateAddress,useDeleteAddress,useSetDefaultAddress}.ts`.
   `.../[addressId]/edit.tsx`.
 - Gate: typecheck + tests afectados (schema, cualquier lógica pura de la
   escalera que se extraiga). Reporte de qué verificar visualmente antes
-  de seguir (permiso otorgado/negado, picker de municipio).
+  de seguir (permiso otorgado/negado, picker de departamento).
 
 ### Checkpoint C — Home + Carrito accionable
 
@@ -394,7 +401,7 @@ useQuickAddToCart.ts`, `app/(app)/addresses/**`,
   1. Crear dirección CON permiso de GPS: reverse-geocode prellena
      `line`, guardar funciona.
   2. Crear dirección SIN permiso (negarlo): se revela el picker de
-     municipio, guardar funciona con esa coordenada aproximada.
+     departamento, guardar funciona con esa coordenada aproximada.
   3. Agregar productos al carrito, ver el CTA "Ir a pagar" habilitado
      (o deshabilitado si el subtotal no alcanza el mínimo), ver
      sugerencias del negocio con quick-add funcionando.

@@ -17,6 +17,13 @@ const config: ExpoConfig = {
     'expo-secure-store',
     'expo-web-browser',
     'expo-apple-authentication',
+    [
+      'expo-location',
+      {
+        locationWhenInUsePermission:
+          'Usamos tu ubicación para ubicar tu dirección de entrega y calcular el envío.',
+      },
+    ],
   ],
   experiments: {
     typedRoutes: true,
