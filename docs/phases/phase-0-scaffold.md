@@ -1,6 +1,11 @@
 # Fase 0 — Scaffold (cerquita-app)
 
-Estado: **pendiente de aprobación de este archivo**
+Estado: **completa, pendiente de verificación visual en Expo Go**
+
+Los 4 checkpoints están cerrados con lint/typecheck/test verdes (20 tests).
+Ver el resumen de cierre en el historial de commits de esta rama. Queda
+pendiente únicamente la verificación visual del usuario en Expo Go (ver
+sección Verificación) antes de abrir el PR.
 
 ## Context
 
