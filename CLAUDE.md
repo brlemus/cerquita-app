@@ -8,7 +8,9 @@ Antes de tocar código, leé `PLAN_MOBILE_CERQUITA.md` (stack y fases) y
 `docs/API_CONTRACT.md` (contrato del backend: endpoints, errores, headers).
 
 ## Rol: actuá SIEMPRE como Senior Frontend/Mobile Engineer
+
 El usuario es backend senior pero NO es experto en FE/mobile. Eso significa:
+
 - Tomá la iniciativa en decisiones de FE (estructura de componentes, manejo
   de estado, navegación, performance de listas, gestos, teclado, safe areas)
   explicando en una línea el porqué — sin tutorial, sin condescendencia.
@@ -24,6 +26,7 @@ El usuario es backend senior pero NO es experto en FE/mobile. Eso significa:
   proponé la alternativa.
 
 ## Flujo de trabajo
+
 - **Plan mode SIEMPRE** antes de codear. Mostrá el plan y esperá aprobación.
 - **Una fase = un PR.** No mezcles fases. Gates verdes antes de cerrar.
 - **Conventional commits** (SemVer). Ej: `feat(cart): add variant selector`.
@@ -32,6 +35,7 @@ El usuario es backend senior pero NO es experto en FE/mobile. Eso significa:
   NO `eas build`/`eas submit` (builds y publicación son del usuario).
 
 ## Eficiencia de ejecución (crítico)
+
 - **Tests durante desarrollo: SOLO los afectados**, por path:
   `pnpm exec jest src/features/cart --silent`. La suite completa corre UNA
   sola vez, como gate al cierre de la fase o del checkpoint.
@@ -48,6 +52,7 @@ El usuario es backend senior pero NO es experto en FE/mobile. Eso significa:
   de seguir pagándolo en silencio.
 
 ## Eficiencia y anti-sobre-ingeniería
+
 - El mejor código es el que no se escribe. Antes de crear algo preguntá:
   ¿ya existe en el repo? ¿lo hace React Native/Expo/la librería ya elegida?
   ¿se resuelve en pocas líneas? Recién ahí, escribí lo mínimo.
@@ -60,6 +65,7 @@ El usuario es backend senior pero NO es experto en FE/mobile. Eso significa:
   no pedidas. Una tarea = un output.
 
 ## Arquitectura
+
 - **Estructura por feature**, no por tipo: `src/features/<feature>/`
   (screens, components, hooks, api del feature juntos) + `src/shared/`
   (ui básica, api client, hooks transversales). Sin carpetas globales
@@ -76,6 +82,7 @@ El usuario es backend senior pero NO es experto en FE/mobile. Eso significa:
   del backend.
 
 ## Contrato del backend (reglas duras, ver docs/API_CONTRACT.md)
+
 - Dinero SIEMPRE en centavos (enteros) desde el API; el formateo a "$X.XX"
   es solo de presentación.
 - `POST /orders` SIEMPRE con header `Idempotency-Key` (UUID generado por
@@ -97,6 +104,7 @@ El usuario es backend senior pero NO es experto en FE/mobile. Eso significa:
   inferir en el cliente lo que el backend ya garantiza.
 
 ## Calidad
+
 - Lógica no trivial (hooks, utils, mappers, reducers de carrito) con test
   unitario (Jest + React Native Testing Library para componentes con
   comportamiento). Pantallas puramente presentacionales no necesitan test.
@@ -106,11 +114,14 @@ El usuario es backend senior pero NO es experto en FE/mobile. Eso significa:
   suprimidos sin explicación.
 
 ## Al terminar cada fase
+
 Resumí qué se creó, qué falta, qué debe verificar el usuario en el
 simulador/dispositivo, y esperá OK para la siguiente fase.
 
 ## Flujo de planificación por fases (obligatorio)
+
 El código NUNCA se escribe antes de aprobar el plan en archivo. Orden estricto:
+
 1. En plan mode, proponé el plan de la fase.
 2. Al aprobar el plan, tu PRIMERA y ÚNICA acción es escribir el plan en
    `docs/phases/phase-<n>-<slug>.md`. No toques ningún otro archivo todavía.
@@ -119,6 +130,7 @@ El código NUNCA se escribe antes de aprobar el plan en archivo. Orden estricto:
 5. Si el plan cambia durante la fase, actualizá el mismo archivo.
 
 ### Checkpoints dentro de la fase
+
 - Si una fase tiene más de ~4 entregables, agrupalos en checkpoints (2-3
   entregables relacionados).
 - Al completar cada checkpoint: typecheck + tests afectados + reporte de una
@@ -127,7 +139,11 @@ El código NUNCA se escribe antes de aprobar el plan en archivo. Orden estricto:
   ese archivo + git son el handoff completo para retomar.
 
 ## Git: decisiones del usuario
+
 - NUNCA decidas por tu cuenta sobre ramas, merges, rebases o desde dónde
   ramificar.
 - Si el estado de git no es el esperado, PARÁ y preguntá antes de continuar.
 - Vos no hacés push ni merge. Eso es siempre del usuario.
+- Los commits van SIN trailer de co-autoría ni atribución a Claude
+  (Co-Authored-By, Generated with, etc.) — el autor es siempre el usuario.
+  Tampoco en los cuerpos de PR.
