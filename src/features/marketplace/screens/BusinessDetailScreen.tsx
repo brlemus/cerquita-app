@@ -17,6 +17,7 @@ import { ProductCardSkeleton } from '../components/ProductCardSkeleton';
 import { RatingBadge } from '../components/RatingBadge';
 import { useBusiness } from '../hooks/useBusiness';
 import { useBusinessProducts } from '../hooks/useBusinessProducts';
+import { useQuickAddToCart } from '../hooks/useQuickAddToCart';
 
 const SKELETON_KEYS = ['s0', 's1', 's2', 's3'];
 const COVER_HEIGHT = 150;
@@ -34,6 +35,11 @@ export function BusinessDetailScreen() {
   const cartLines = useCartStore((state) => state.lines);
   const showCartBar = cartBusinessId === businessId && cartLines.length > 0;
 
+  // businessQuery.data puede no estar listo todavía -- el quick-add real
+  // solo se dispara una vez que la lista de productos ya está renderizada,
+  // momento en el que el negocio ya cargó.
+  const quickAddOrOpen = useQuickAddToCart(businessId, businessQuery.data?.name ?? '');
+
   const products = useMemo(
     () => productsQuery.data?.pages.flatMap((page) => page.data) ?? [],
     [productsQuery.data],
@@ -50,9 +56,10 @@ export function BusinessDetailScreen() {
       <ProductCard
         product={item}
         onPress={() => router.push(`/business/${businessId}/product/${item.id}`)}
+        onQuickAdd={quickAddOrOpen}
       />
     ),
-    [businessId, router],
+    [businessId, router, quickAddOrOpen],
   );
 
   if (businessQuery.isPending) {

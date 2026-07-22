@@ -33,3 +33,18 @@ export function BackIcon() {
     </Svg>
   );
 }
+
+export function ChevronDownIcon() {
+  return (
+    <Svg width={10} height={10} viewBox="0 0 24 24">
+      <Path
+        d="M6 9l6 6 6-6"
+        stroke={colors.text.primary}
+        strokeWidth={2.4}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+    </Svg>
+  );
+}

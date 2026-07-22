@@ -2,19 +2,24 @@ import { Image } from 'expo-image';
 import { memo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { colors, radius, spacing, Text } from '@/shared/ui';
+import { colors, QuickAddButton, radius, spacing, Text } from '@/shared/ui';
 import { formatMoneyCents } from '@/shared/utils';
 import type { Product } from '../api/types';
 
 export type ProductCardProps = {
   product: Product;
   onPress: () => void;
+  /** Solo se muestra el "+" si el producto no tiene variantes -- con variantes hay que abrir el detalle. */
+  onQuickAdd?: (product: Product) => void;
 };
 
-export const ProductCard = memo(function ProductCard({ product, onPress }: ProductCardProps) {
-  const description =
-    product.description ??
-    (product.variantGroups.length > 0 ? 'Varias opciones disponibles' : null);
+export const ProductCard = memo(function ProductCard({
+  product,
+  onPress,
+  onQuickAdd,
+}: ProductCardProps) {
+  const hasVariants = product.variantGroups.length > 0;
+  const description = product.description ?? (hasVariants ? 'Varias opciones disponibles' : null);
 
   return (
     <Pressable
@@ -46,6 +51,7 @@ export const ProductCard = memo(function ProductCard({ product, onPress }: Produ
           {formatMoneyCents(product.priceCents)}
         </Text>
       </View>
+      {!hasVariants && onQuickAdd ? <QuickAddButton onPress={() => onQuickAdd(product)} /> : null}
     </Pressable>
   );
 });
@@ -53,6 +59,7 @@ export const ProductCard = memo(function ProductCard({ product, onPress }: Produ
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.md,
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
