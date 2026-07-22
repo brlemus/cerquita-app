@@ -6,6 +6,8 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'reac
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
+import { CartIconButton } from '@/features/cart/components/CartIconButton';
+import { useCartStore } from '@/features/cart/store/cartStore';
 import { colors, EmptyState, ErrorState, radius, spacing, Text } from '@/shared/ui';
 import type { Business } from '../api/types';
 import { BusinessCard } from '../components/BusinessCard';
@@ -83,9 +85,14 @@ export function HomeScreen() {
           <SearchIcon />
           <Text color="secondary">Buscar negocios</Text>
         </Pressable>
+        <CartIconButton />
         {/* temporal hasta Fase 7 (Profile) -- único punto de logout hasta entonces */}
         <Pressable
-          onPress={() => signOut()}
+          onPress={() => {
+            // el carrito es del usuario que sale de sesión -- no debe sobrevivir para el próximo login
+            useCartStore.getState().clearCart();
+            signOut();
+          }}
           style={styles.iconButton}
           accessibilityRole="button"
           accessibilityLabel="Cerrar sesión"

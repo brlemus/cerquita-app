@@ -1,8 +1,10 @@
 import { FlashList, type ListRenderItem } from '@shopify/flash-list';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useMemo } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { itemCount, subtotalCents, useCartStore } from '@/features/cart/store/cartStore';
 import { ApiRequestError } from '@/shared/api';
 import { colors, EmptyState, ErrorState, radius, Skeleton, spacing, Text } from '@/shared/ui';
 import { formatMoneyCents } from '@/shared/utils';
@@ -23,9 +25,14 @@ const LOGO_SIZE = 72;
 export function BusinessDetailScreen() {
   const { businessId } = useLocalSearchParams<{ businessId: string }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const businessQuery = useBusiness(businessId);
   const productsQuery = useBusinessProducts(businessId);
+
+  const cartBusinessId = useCartStore((state) => state.businessId);
+  const cartLines = useCartStore((state) => state.lines);
+  const showCartBar = cartBusinessId === businessId && cartLines.length > 0;
 
   const products = useMemo(
     () => productsQuery.data?.pages.flatMap((page) => page.data) ?? [],
@@ -146,6 +153,28 @@ export function BusinessDetailScreen() {
         onEndReachedThreshold={0.5}
         contentContainerStyle={styles.listContent}
       />
+      {showCartBar ? (
+        <Pressable
+          onPress={() => router.push('/cart')}
+          style={[styles.cartBar, { marginBottom: insets.bottom + spacing.md }]}
+          accessibilityRole="button"
+          accessibilityLabel={`Ver mi carrito, ${itemCount(cartLines)} ítems, ${formatMoneyCents(subtotalCents(cartLines))}`}
+        >
+          <View style={styles.cartBarLeft}>
+            <View style={styles.cartBarCount}>
+              <Text variant="bodySm" color="onBrand" style={styles.cartBarCountText}>
+                {itemCount(cartLines)}
+              </Text>
+            </View>
+            <Text variant="subtitle" color="onBrand">
+              Ver mi carrito
+            </Text>
+          </View>
+          <Text variant="subtitle" color="onBrand">
+            {formatMoneyCents(subtotalCents(cartLines))}
+          </Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -210,5 +239,32 @@ const styles = StyleSheet.create({
   },
   footerLoader: {
     paddingVertical: spacing.lg,
+  },
+  cartBar: {
+    marginHorizontal: spacing.xl,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    borderRadius: radius.xl,
+    backgroundColor: colors.brand.default,
+  },
+  cartBarLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  cartBarCount: {
+    minWidth: 24,
+    height: 24,
+    paddingHorizontal: spacing.xs,
+    borderRadius: radius.sm,
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cartBarCountText: {
+    fontWeight: '700',
   },
 });
