@@ -17,6 +17,8 @@ const config: ExpoConfig = {
     'expo-secure-store',
     'expo-web-browser',
     'expo-apple-authentication',
+    'expo-image',
+    'expo-splash-screen',
     [
       'expo-location',
       {
@@ -30,6 +32,10 @@ const config: ExpoConfig = {
   },
   ios: {
     usesAppleSignIn: true,
+    bundleIdentifier: 'com.cerquita.app',
+  },
+  android: {
+    package: 'com.cerquita.app',
   },
   extra: {
     apiUrl,
