@@ -2,8 +2,6 @@
 
 ### Progreso
 
-- Sin empezar. Este archivo es el plan aprobado, punto de partida para
-  implementar.
 - **Investigación previa ya resuelta** (ver `docs/API_CONTRACT.md`,
   commit `a3777c1`): el 409 de stock insuficiente en `POST /orders` no
   estaba documentado — confirmado leyendo `create-order.handler.ts` y
@@ -11,6 +9,35 @@
   (`isOpen`/no-`ACTIVE`, `minOrder`, stock) comparten `code: "CONFLICT"`
   y se distinguen por la forma de `details` — ver sección "Clasificación
   de errores de `POST /orders`" más abajo.
+- **Checkpoint A** — cerrado. `expo-location`/`expo-crypto` instalados
+  (plugin de permiso de ubicación en `app.config.ts`), `expo-doctor`
+  18/18. Tabla estática de departamentos (ajuste de alcance desde
+  "municipio", ver sección dedicada) con datos verificados contra
+  Wikipedia. Tipos/wrappers/hooks de direcciones (`useAddresses` +
+  4 mutaciones, primer `useMutation` del proyecto). 4 tests. Sin
+  verificación visual.
+- **Checkpoint B** — cerrado. Escalera de resolución de ubicación (GPS →
+  geocoding oportunista de `line` donde la plataforma lo permite →
+  picker de departamento sobre la tabla estática) vía `useAddressLocation`
+  - `LocationCaptureCard` + `DepartamentoPicker` (modal, sin dependencia
+    nueva). `AddressFormScreen` (create/edit, RHF+zod) y `AddressListScreen`
+    (modo gestión/selección por `?returnTo=`). 10 tests nuevos.
+- **Checkpoint C** — cerrado. Selector "Entregar en" en `HomeScreen`
+  (preferencia visual, no filtra el marketplace). `useQuickAddToCart`
+  compartido (mismo guard de cambio de negocio que `ProductDetailScreen`)
+  entre el "+" de `ProductCard` y las sugerencias del carrito. `CartScreen`
+  gana el CTA "Ir a pagar" (deshabilitado por `needsMore`/`isOpen`) y la
+  sección de sugerencias del negocio.
+- **Checkpoint D** — cerrado. `useCreateOrder`/`useOrder` (API real),
+  `classifyOrderConflict` + `deriveCheckoutError` (puras, testeadas: 20
+  tests) clasifican los tres 409 reales por forma de `details`, con
+  degradación a copy genérica cuando la línea de stock no matchea
+  ninguna del carrito (precisión pedida en la aprobación). `CheckoutScreen`
+  (Idempotency-Key por mount, reusado en retries) y
+  `OrderConfirmationScreen` (fuente propia vía `GET /orders/:id`, sin
+  polling). **Gate de cierre de fase**: `pnpm test` (35 suites / 182
+  tests), `pnpm lint`, `pnpm exec tsc --noEmit` y `expo-doctor` (18/18)
+  todos en verde.
 
 ## Context
 
