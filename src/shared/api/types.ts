@@ -33,3 +33,14 @@ export type HttpErrorBody = {
 export type UserStatus = 'ACTIVE' | 'SUSPENDED';
 
 export type UserRole = 'SUPER_ADMIN' | 'BUSINESS_OWNER' | 'EMPLOYEE' | 'CUSTOMER';
+
+/** GET /auth/me — alta JIT del usuario autenticado (docs/API_CONTRACT.md, sección Auth). */
+export type AuthMeResponse = {
+  id: string;
+  clerkId: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  status: UserStatus;
+  businessId: string | null;
+};

@@ -2,6 +2,7 @@
 import type { ExpoConfig } from 'expo/config';
 
 const apiUrl = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
+const clerkPublishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ?? '';
 
 const config: ExpoConfig = {
   name: 'Cerquita',
@@ -10,12 +11,13 @@ const config: ExpoConfig = {
   orientation: 'portrait',
   scheme: 'cerquita',
   userInterfaceStyle: 'light',
-  plugins: ['expo-router', 'expo-font'],
+  plugins: ['expo-router', 'expo-font', 'expo-secure-store', 'expo-web-browser'],
   experiments: {
     typedRoutes: true,
   },
   extra: {
     apiUrl,
+    clerkPublishableKey,
   },
 };
 

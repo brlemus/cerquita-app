@@ -7,9 +7,18 @@ export type ButtonProps = Omit<PressableProps, 'children' | 'disabled'> & {
   title: string;
   disabled?: boolean;
   loading?: boolean;
+  /** 'lg' = CTA principal del diseño (radius 14, texto subtitle). Default 'md'. */
+  size?: 'md' | 'lg';
 };
 
-export function Button({ title, disabled = false, loading = false, style, ...rest }: ButtonProps) {
+export function Button({
+  title,
+  disabled = false,
+  loading = false,
+  size = 'md',
+  style,
+  ...rest
+}: ButtonProps) {
   const isDisabled = disabled || loading;
 
   return (
@@ -19,6 +28,7 @@ export function Button({ title, disabled = false, loading = false, style, ...res
       disabled={isDisabled}
       style={(state) => [
         styles.base,
+        size === 'lg' && styles.lg,
         state.pressed && !isDisabled && styles.pressed,
         isDisabled && styles.disabled,
         typeof style === 'function' ? style(state) : style,
@@ -28,7 +38,7 @@ export function Button({ title, disabled = false, loading = false, style, ...res
       {loading ? (
         <ActivityIndicator color={colors.text.onBrand} />
       ) : (
-        <Text variant="bodyMd" color="onBrand">
+        <Text variant={size === 'lg' ? 'subtitle' : 'bodyMd'} color="onBrand">
           {title}
         </Text>
       )}
@@ -45,6 +55,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  lg: {
+    borderRadius: radius.lg,
+    paddingVertical: spacing.md,
   },
   pressed: {
     backgroundColor: colors.brand.pressed,
