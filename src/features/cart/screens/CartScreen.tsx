@@ -129,9 +129,7 @@ export function CartScreen() {
               title="Ir a pagar"
               size="lg"
               disabled={checkoutDisabled}
-              // /checkout se crea en el checkpoint D de esta misma fase --
-              // cast temporal, se saca ahí (ver docs/phases/phase-4-checkout.md).
-              onPress={() => router.push('/checkout' as never)}
+              onPress={() => router.push('/checkout')}
               style={styles.checkoutButton}
             />
           </View>
