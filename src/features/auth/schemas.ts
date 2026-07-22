@@ -20,3 +20,8 @@ export const verificationSchema = z.object({
     .regex(/^\d+$/, 'El código es solo números'),
 });
 export type VerificationFormValues = z.infer<typeof verificationSchema>;
+
+export const completeNameSchema = z.object({
+  name: z.string().min(1, 'Ingresá tu nombre'),
+});
+export type CompleteNameFormValues = z.infer<typeof completeNameSchema>;

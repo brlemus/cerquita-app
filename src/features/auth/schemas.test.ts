@@ -1,4 +1,4 @@
-import { signInSchema, signUpSchema, verificationSchema } from './schemas';
+import { completeNameSchema, signInSchema, signUpSchema, verificationSchema } from './schemas';
 
 describe('signInSchema', () => {
   it('accepts a valid email and password', () => {
@@ -54,5 +54,15 @@ describe('verificationSchema', () => {
 
   it('rejects a code with non-numeric characters', () => {
     expect(verificationSchema.safeParse({ code: 'abcdef' }).success).toBe(false);
+  });
+});
+
+describe('completeNameSchema', () => {
+  it('accepts a non-empty name', () => {
+    expect(completeNameSchema.safeParse({ name: 'Ana' }).success).toBe(true);
+  });
+
+  it('rejects an empty name', () => {
+    expect(completeNameSchema.safeParse({ name: '' }).success).toBe(false);
   });
 });

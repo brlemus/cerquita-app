@@ -22,6 +22,14 @@ const MESSAGES: Record<string, string> = {
   user_locked: 'Tu cuenta se bloqueó temporalmente por demasiados intentos. Esperá unos minutos.',
   signup_rate_limit_exceeded: 'Hiciste demasiados intentos. Esperá un momento e intentá de nuevo.',
   captcha_invalid: 'No pudimos verificar que sos una persona. Intentá de nuevo.',
+  // OAuth (Google/Apple vía useSSO) — códigos confirmados contra el bundle
+  // de @clerk/clerk-js. oauth_access_denied (el usuario cancela desde el
+  // navegador) normalmente NO llega acá porque useSSO no tira excepción en
+  // ese caso (createdSessionId queda null); se mapea igual por si Clerk lo
+  // reporta como excepción en algún borde.
+  external_account_exists:
+    'Ya existe una cuenta con ese email usando otro método. Iniciá sesión con tu contraseña.',
+  oauth_access_denied: 'Cancelaste el inicio de sesión.',
 };
 
 const FALLBACK = 'Ocurrió un error. Intentá de nuevo.';
