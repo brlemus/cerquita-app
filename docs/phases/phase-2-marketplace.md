@@ -11,6 +11,14 @@
   (`shared/api/queryString.ts`), `formatMoneyCents` (`shared/utils/money.ts`),
   `useDebounce` (`shared/hooks/useDebounce.ts`), todos con tests. Typecheck +
   suite de `shared/` en verde (40 tests).
+- **Checkpoint B** — cerrado. `Skeleton` (`Animated` nativo, pulso de
+  opacidad), `EmptyState`, `ErrorState` (generaliza el bloque inline que
+  tenía `AccountGate.tsx`) en `shared/ui/`, exportados desde el barrel. Nota
+  de tooling: React Native Testing Library v13 excluye por default los
+  elementos marcados `accessibilityElementsHidden` de las queries (incluido
+  `getByTestId`) — los tests de `Skeleton` necesitan
+  `{ includeHiddenElements: true }` explícito. Typecheck + tests en verde
+  (10 tests nuevos).
 
 ## Context
 
