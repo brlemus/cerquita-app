@@ -1,5 +1,30 @@
 # Fase 5 — Tracking del pedido + push
 
+### Progreso
+
+- **Checkpoint A** — gate automático cerrado (suite 35/35, lint,
+  typecheck, `expo-doctor` 21/21), commit `chore(sdk): upgrade to Expo
+SDK 56`. Pendiente tu build + smoke visual en ambos teléfonos antes de
+  abrir el Checkpoint B.
+- **Bloqueo real encontrado y resuelto durante el gate tuyo**: `eas build`
+  fallaba al leer `app.config.ts` (`Cannot read properties of undefined
+(reading 'CommonJS')`) — no es el bug conocido de TypeScript 7
+  (expo/expo#47627, cerrado, no aplica a 6.x). Causa verificada contra el
+  código real: `eas-cli@21.0.3` (última versión publicada, confirmado que
+  no existe una más nueva) trae su propio `@expo/config@55.0.10` →
+  `@expo/require-utils@^55.0.3`, una versión entera atrás de la que usa
+  el propio proyecto (`56.1.5`, la que sí lee bien `app.config.ts` vía
+  `npx expo config`). La 55.x accede a `ts.ModuleKind.CommonJS` sin
+  guardas; la 56.x lo envuelve en `loadTypescript()` + `if (ts)` —
+  bajo TypeScript 6.0.3 la 55.x rompe. Sin fix de eas-cli publicado
+  todavía. **Se convirtió `app.config.ts` → `app.config.js`** (con JSDoc
+  `@type` para mantener el hint de tipos en el editor, sin enforcement de
+  `tsc` — mismo patrón ya usado en `jest.config.js` de este repo) — evita
+  por completo la rama de transpilación TS de `@expo/require-utils` donde
+  vive el bug, reversible cuando eas-cli actualice su dependencia. Todas
+  las menciones de `app.config.ts` en este documento se actualizaron a
+  `app.config.js`.
+
 ## Context
 
 El carrito y el checkout (Fase 4) terminan en `OrderConfirmationScreen`
@@ -323,7 +348,7 @@ messaging().setBackgroundMessageHandler(async () => {
 import 'expo-router/entry';
 ```
 
-`app.config.ts` — nuevos campos:
+`app.config.js` — nuevos campos:
 
 ```ts
 ios: { usesAppleSignIn: true, bundleIdentifier: 'com.cerquita.app',
@@ -391,7 +416,7 @@ exige un rebuild nuevo, no cada cambio de código.
 
 | Paso                                                                                                                                                                                                 | Quién                      |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
-| `npx expo install expo-dev-client`, config de `app.config.ts`/`eas.json`                                                                                                                             | Yo                         |
+| `npx expo install expo-dev-client`, config de `app.config.js`/`eas.json`                                                                                                                             | Yo                         |
 | Build del dev client, **primera vez** (Checkpoint A, sin Firebase): `eas build --profile development --platform android` (o `npx expo run:android`/`run:ios` en local si tenés Android Studio/Xcode) | **Vos**                    |
 | Instalar esa build en ambos teléfonos, smoke visual del bump de SDK                                                                                                                                  | **Vos**                    |
 | Crear proyecto Firebase + descargar `google-services.json`/`.plist` (ver checklist abajo)                                                                                                            | **Vos**                    |
@@ -443,7 +468,7 @@ la fuente de verdad de todos modos.
 - `npx expo install --fix` tras bumpear `expo` a `~56.x`; revisar cada
   downgrade/upgrade no obvio que el comando no cubra (mismo cuidado que
   Fase 0 tuvo bajando a 54).
-- `app.config.ts`: `ios.bundleIdentifier`/`android.package` =
+- `app.config.js`: `ios.bundleIdentifier`/`android.package` =
   `com.cerquita.app`; `expo-dev-client` instalado.
 - `eas.json` nuevo (perfiles arriba).
 - Gate (yo): `pnpm test` completo + `pnpm lint` + `tsc --noEmit` +
@@ -478,7 +503,7 @@ la fuente de verdad de todos modos.
 ### Checkpoint C — Push FCM (Android) + segundo rebuild nativo
 
 - Dependencias (`@react-native-firebase/app`/`messaging`,
-  `expo-notifications`), plugins en `app.config.ts`, `.gitignore` de los
+  `expo-notifications`), plugins en `app.config.js`, `.gitignore` de los
   archivos de Firebase, `index.js` con el background handler.
 - `src/features/push/**` completo (registro/baja, `PushProvider`,
   tarjeta de permiso en contexto, deep link foreground/background/quit),
@@ -496,7 +521,7 @@ la fuente de verdad de todos modos.
 
 - Crear: `src/features/orders/**`, `src/features/push/**`,
   `src/shared/api/queryFocusManager.ts`, `index.js`, `eas.json`.
-- Modificar: `app.config.ts`, `.gitignore`, `package.json` (`main`,
+- Modificar: `app.config.js`, `.gitignore`, `package.json` (`main`,
   dependencias), `shared/api/client.ts` (`requestRaw`),
   `checkout/api/types.ts` (reimport), `CheckoutScreen.tsx`/
   `OrderConfirmationScreen.tsx` (import + botón "Ver seguimiento"),
