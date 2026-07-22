@@ -11,9 +11,18 @@ const config: ExpoConfig = {
   orientation: 'portrait',
   scheme: 'cerquita',
   userInterfaceStyle: 'light',
-  plugins: ['expo-router', 'expo-font', 'expo-secure-store', 'expo-web-browser'],
+  plugins: [
+    'expo-router',
+    'expo-font',
+    'expo-secure-store',
+    'expo-web-browser',
+    'expo-apple-authentication',
+  ],
   experiments: {
     typedRoutes: true,
+  },
+  ios: {
+    usesAppleSignIn: true,
   },
   extra: {
     apiUrl,

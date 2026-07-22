@@ -1,30 +1,50 @@
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuth, useUser } from '@clerk/clerk-expo';
 import { useEffect, type PropsWithChildren } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ApiRequestError } from '@/shared/api';
 import { Button, colors, spacing, Text } from '@/shared/ui';
+import { saveNameAndRefreshToken } from '../completeNameFlow';
 import { useAuthMe } from '../hooks/useAuthMe';
+import { CompleteNameScreen } from '../screens/CompleteNameScreen';
 import { SuspendedScreen } from '../screens/SuspendedScreen';
 
 /**
  * Corre GET /auth/me al entrar a rutas protegidas y ramifica por el
  * contrato de errores de cuenta (docs/API_CONTRACT.md): 401 desloguea,
  * 403 suspended y 409 re-registro bloqueado muestran la misma pantalla.
+ * También cubre el caso de Apple sin nombre compartido (Fase 1.5, ver
+ * docs/phases/phase-1.5-social-login.md): sin `firstName` en Clerk, el
+ * claim `name` del session token queda vacío y el backend devuelve 400.
  */
 export function AccountGate({ children }: PropsWithChildren) {
-  const { signOut } = useAuth();
+  const { signOut, getToken } = useAuth();
+  const { user } = useUser();
   const { data, error, isPending, refetch, isRefetching } = useAuthMe();
 
   const kind = error instanceof ApiRequestError ? error.error.kind : undefined;
   const isUnauthorized = kind === 'unauthorized';
+  const needsName = Boolean(user) && !user?.firstName;
 
   useEffect(() => {
     if (isUnauthorized) {
       signOut();
     }
   }, [isUnauthorized, signOut]);
+
+  async function handleNameSaved(name: string) {
+    if (!user) {
+      return;
+    }
+    await saveNameAndRefreshToken(user, getToken, refetch, name);
+  }
+
+  // Proactivo: evita llamar /auth/me sabiendo que va a dar 400 por claim
+  // faltante. Antes de mirar el resultado de la query.
+  if (needsName) {
+    return <CompleteNameScreen onSubmit={handleNameSaved} />;
+  }
 
   if (isPending || isUnauthorized) {
     return (
@@ -36,6 +56,13 @@ export function AccountGate({ children }: PropsWithChildren) {
 
   if (kind === 'suspended' || kind === 'reRegisterBlocked') {
     return <SuspendedScreen />;
+  }
+
+  // Defensivo: el único 400 documentado de /auth/me es claim faltante — si
+  // llegó hasta acá pese al chequeo proactivo (ej. lag del token), misma
+  // pantalla, no el error genérico.
+  if (kind === 'validation') {
+    return <CompleteNameScreen onSubmit={handleNameSaved} />;
   }
 
   if (error) {

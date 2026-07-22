@@ -7,6 +7,7 @@ import { Pressable, StyleSheet, View, type TextInput } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { getClerkErrorMessage } from '../clerkErrorMessage';
+import { SocialSignInButtons } from '../components/SocialSignInButtons';
 import { signUpSchema, type SignUpFormValues } from '../schemas';
 import { Button, colors, KeyboardAwareScreen, radius, spacing, Text, TextField } from '@/shared/ui';
 
@@ -143,6 +144,8 @@ export function SignUpScreen() {
         onPress={handleSubmit(onSubmit)}
         style={styles.submit}
       />
+
+      <SocialSignInButtons onError={setFormError} />
     </KeyboardAwareScreen>
   );
 }

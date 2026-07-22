@@ -7,6 +7,7 @@ import { StyleSheet, View, type TextInput } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 
 import { getClerkErrorMessage, getIncompleteSignInMessage } from '../clerkErrorMessage';
+import { SocialSignInButtons } from '../components/SocialSignInButtons';
 import { signInSchema, type SignInFormValues } from '../schemas';
 import { Button, colors, KeyboardAwareScreen, spacing, Text, TextField } from '@/shared/ui';
 
@@ -121,6 +122,8 @@ export function SignInScreen() {
           style={styles.submit}
         />
       </View>
+
+      <SocialSignInButtons onError={setFormError} />
 
       <Link href="/(auth)/sign-up" style={styles.footer}>
         <Text variant="bodyMd" color="secondary" style={styles.footerText}>

@@ -10,8 +10,12 @@ jest.mock('../hooks/useAuthMe');
 const mockUseAuthMe = useAuthMe as jest.Mock;
 
 const mockSignOut = jest.fn();
+const mockGetToken = jest.fn();
+let mockUser: { firstName: string | null } | null = { firstName: 'Ana' };
+
 jest.mock('@clerk/clerk-expo', () => ({
-  useAuth: () => ({ signOut: mockSignOut }),
+  useAuth: () => ({ signOut: mockSignOut, getToken: mockGetToken }),
+  useUser: () => ({ user: mockUser }),
 }));
 
 function mockQuery(overrides: Record<string, unknown>) {
@@ -28,6 +32,7 @@ function mockQuery(overrides: Record<string, unknown>) {
 describe('AccountGate', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUser = { firstName: 'Ana' };
   });
 
   it('shows a loading state while the query is pending', () => {
@@ -115,5 +120,35 @@ describe('AccountGate', () => {
     fireEvent.press(screen.getByText('Reintentar'));
 
     expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows CompleteNameScreen proactively when Clerk has no firstName, without waiting on /auth/me', () => {
+    mockUser = { firstName: null };
+    // Aunque la query esté pendiente, el gate ni la mira mientras falte el nombre.
+    mockQuery({ isPending: true });
+
+    render(
+      <AccountGate>
+        <Text>Home</Text>
+      </AccountGate>,
+    );
+
+    expect(screen.getByText('Completá tu nombre')).toBeTruthy();
+    expect(screen.queryByTestId('account-gate-loading')).toBeNull();
+  });
+
+  it('shows CompleteNameScreen defensively when /auth/me returns validation (400 claims) despite having a name', () => {
+    mockUser = { firstName: 'Ana' };
+    mockQuery({
+      error: new ApiRequestError({ kind: 'validation', status: 400, message: 'x' }),
+    });
+
+    render(
+      <AccountGate>
+        <Text>Home</Text>
+      </AccountGate>,
+    );
+
+    expect(screen.getByText('Completá tu nombre')).toBeTruthy();
   });
 });

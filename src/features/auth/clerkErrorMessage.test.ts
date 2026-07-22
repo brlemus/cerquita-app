@@ -25,6 +25,16 @@ describe('getClerkErrorMessage', () => {
     expect(getClerkErrorMessage(error)).toContain('bloqueó temporalmente');
   });
 
+  it('maps an OAuth account that already exists under another method', () => {
+    const error = { errors: [{ code: 'external_account_exists' }] };
+    expect(getClerkErrorMessage(error)).toContain('otro método');
+  });
+
+  it('maps an OAuth flow denied by the user', () => {
+    const error = { errors: [{ code: 'oauth_access_denied' }] };
+    expect(getClerkErrorMessage(error)).toBe('Cancelaste el inicio de sesión.');
+  });
+
   it('falls back to a generic Spanish message for unmapped codes and logs the raw code in dev', () => {
     const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     const error = { errors: [{ code: 'some_unmapped_code', message: 'raw english text' }] };
