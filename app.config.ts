@@ -9,7 +9,7 @@ const config: ExpoConfig = {
   orientation: 'portrait',
   scheme: 'cerquita',
   userInterfaceStyle: 'light',
-  plugins: ['expo-router'],
+  plugins: ['expo-router', 'expo-font'],
   experiments: {
     typedRoutes: true,
   },

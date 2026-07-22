@@ -7,6 +7,42 @@ Ver el resumen de cierre en el historial de commits de esta rama. Queda
 pendiente únicamente la verificación visual del usuario en Expo Go (ver
 sección Verificación) antes de abrir el PR.
 
+## Decisión: Expo SDK 54, no 57
+
+El scaffold se armó inicialmente sobre **SDK 57** (la última disponible al
+momento de instalar). El gate visual falló: el Expo Go publicado en las
+tiendas (iOS y Android) todavía sirve **hasta SDK 54** — "Project is
+incompatible with this version of Expo Go" en ambos teléfonos.
+
+**Se bajó todo el proyecto a Expo SDK 54** (`~54.0.36`, la última patch de
+esa SDK), re-resolviendo con `expo install --fix` — incluye downgrades no
+obvios que el propio comando no cubre porque no son "native modules":
+
+- `typescript` 6.0.3 → `~5.9.3` (el propio `@expo/cli` de SDK 54 exige
+  TypeScript ^5.x).
+- `jest-expo` → `~54.0.17` (versión de jest-expo atada 1:1 a la SDK, no al
+  major de Jest).
+- `eslint-config-expo` → `~10.0.0`.
+- `@testing-library/react-native` 14.x → **13.3.3**: la v14 depende de un
+  paquete interno (`test-renderer@1.2.0` → `react-reconciler@0.33.0`) que
+  exige React `^19.2.0`; SDK 54 fija React `19.1.0`. La v13.x usa el
+  `react-test-renderer` clásico (`>=18.2.0`), compatible. Este era el
+  bloqueo real detrás de un peer-conflict que no se resolvía con un
+  simple `--fix`.
+- `expo-linking` y `@expo/metro-runtime` se agregaron como dependencias
+  explícitas: son peers **no opcionales** de `expo-router` 6.x (en la 57.x
+  eran opcionales) y no había ningún paquete en el árbol que los trajera.
+
+**Regla para las próximas fases (0-4): fijar SDK 54 mientras Expo Go sea
+la herramienta de verificación visual.** No hay nada del scaffold que
+dependa de una API exclusiva de SDK 55+ (se confirmó vía typecheck + test
+completos, sin cambios de código de aplicación, solo de versiones). La
+migración a una SDK más nueva se evalúa recién en la **Fase 5** — ahí el
+proyecto pasa a **development build** (por el requisito de
+`@react-native-firebase/messaging` para push en iOS) y Expo Go deja de ser
+la herramienta de verificación, con lo cual el techo de compatibilidad de
+Expo Go deja de aplicar.
+
 ## Context
 
 El repo `cerquita-app` está en verde pero vacío de código: solo `docs/`,
