@@ -1,5 +1,17 @@
 # Fase 2 — Marketplace (Home, búsqueda, categorías, detalle de negocio)
 
+### Progreso
+
+- **CP0** — cerrado (commit `fix(auth)`), verificado en dispositivo por el
+  usuario: Google en Android completa el flujo OAuth y aterriza logueado en
+  Home; iOS sin regresión.
+- **Checkpoint A** — cerrado. `@shopify/flash-list` 2.0.2, `expo-image`
+  ~3.0.11 instaladas (`expo-doctor` 18/18). DTOs de marketplace en
+  `src/features/marketplace/api/types.ts`. `buildQueryString`
+  (`shared/api/queryString.ts`), `formatMoneyCents` (`shared/utils/money.ts`),
+  `useDebounce` (`shared/hooks/useDebounce.ts`), todos con tests. Typecheck +
+  suite de `shared/` en verde (40 tests).
+
 ## Context
 
 Fases 0-1.5 dejaron el scaffold, el theme, el API client con manejo de errores
