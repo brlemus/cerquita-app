@@ -19,6 +19,16 @@
   `getByTestId`) — los tests de `Skeleton` necesitan
   `{ includeHiddenElements: true }` explícito. Typecheck + tests en verde
   (10 tests nuevos).
+- **Checkpoint C** — cerrado. `getBusinesses`/`getBusinessById`/
+  `getBusinessProducts`/`getPlatformCategories` (`marketplace/api/`) +
+  `getNextCursorParam` (`pagination.ts`, con test); hooks `useBusinesses`
+  (infinite, `keepPreviousData`, `search`/`platformCategoryId`
+  normalizados), `useBusiness`, `useBusinessProducts` (infinite),
+  `usePlatformCategories` (`staleTime` 10 min) en `marketplace/hooks/`. Los
+  4 hooks no tienen test directo -- mismo criterio que `useAuthMe` (wiring
+  fino de TanStack Query sin ramificación propia; la lógica no trivial ya
+  está testeada en los wrappers de API y en `getNextCursorParam`).
+  Typecheck + tests en verde (18 tests nuevos).
 
 ## Context
 
