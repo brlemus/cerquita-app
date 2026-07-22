@@ -235,6 +235,30 @@ Fase 1, ver `docs/phases/phase-1-auth.md`). La promoción a `BUSINESS_OWNER`
 pasa exclusivamente por el flujo de auto-servicio desde Perfil, nunca por un
 selector en el registro.
 
+## Paridad con el prototipo
+
+El prototipo (`docs/design/Cerca.dc.html`) dibuja elementos de UI que la
+app real todavía no construyó, o que nunca va a construir tal cual están
+ahí porque el contrato del backend no los sostiene. Esta tabla es el mapa
+de "qué pasó con cada uno" — para no tener que redescubrir en cada fase
+si algo quedó pendiente, se recortó a propósito, o directamente no es
+construible con el backend actual.
+
+| Elemento del prototipo                              | Destino                                          | Nota                                                                                                                                                                                                                                                                               |
+| --------------------------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CTA "Ir a pagar" del carrito                        | Fase 4                                           | Ya estaba en el alcance de Checkout — la Fase 3 lo dejó fuera a propósito, sin destino todavía (ver `docs/phases/phase-3-cart.md`).                                                                                                                                                |
+| Selector de dirección de entrega                    | Fase 4                                           | Ya estaba en el alcance (CRUD de direcciones + selección de dirección guardada).                                                                                                                                                                                                   |
+| "Sugerencias del negocio" en el carrito             | Fase 4 (alcance sumado)                          | El prototipo las muestra en la pantalla de carrito (productos del mismo negocio no agregados todavía). Se suman a Checkout porque comparten lógica de "agregar sin pasar por Product Detail" con el punto siguiente.                                                               |
+| Quick-add "+" para productos sin variantes          | Fase 4 (alcance sumado)                          | Mismo patrón que las sugerencias (tarjeta chica con "+" directo, sin abrir Product Detail). La Fase 3 solo resolvió el flujo completo vía Product Detail; el atajo se suma a Fase 4 en vez de abrir un checkpoint aparte ahora.                                                    |
+| Tab bar (Inicio/Pedidos/Perfil)                     | Fase 6 (Historial + Reviews + Feedback)          | Fase 2 ya documentó que un shell de tabs con destinos vacíos no se justifica (`docs/phases/phase-2-marketplace.md`). Pedidos es el primer segundo-destino real de primer nivel de la app — ahí se decide y se construye.                                                           |
+| Chips de categoría de catálogo (detalle de negocio) | Bloqueado — gap de contrato                      | Ya anotado en Fase 2: falta `catalogCategoryName` en el DTO de producto (o un endpoint de categorías de catálogo). Sin nombre legible no hay chip que mostrar sin inventar.                                                                                                        |
+| Búsqueda de productos                               | Bloqueado — gap de contrato                      | Ya anotado en Fase 2: `GET /marketplace/businesses` solo expone `search` sobre el nombre del negocio; no existe búsqueda de productos en el contrato.                                                                                                                              |
+| Orden por cercanía                                  | Bloqueado — gap de contrato (nuevo, anotado acá) | `Business` tiene `lat`/`lng` (nullable), pero `GET /marketplace/businesses` no expone ningún parámetro de orden/distancia — solo paginación por cursor. Sin ese parámetro en el backend no hay forma de pedir "más cercanos primero".                                              |
+| Banner promocional (Home)                           | Backlog post-MVP                                 | Requiere un modelo de promociones (tabla + endpoint) que hoy no existe en el contrato — ver ítem agregado en Backlog post-MVP, abajo.                                                                                                                                              |
+| Campana de notificaciones (Home)                    | Recorte permanente                               | El push de Fase 5 deep-linkea directo al pedido correspondiente (`docs/API_CONTRACT.md`, sección Devices). Un centro de notificaciones aparte sería UI sin función real, no una fase pendiente.                                                                                    |
+| Fotos de producto reales                            | Dato pendiente (Cloudinary + fases owner)        | El campo `photoUrl` ya se consume donde existe, con fallback diseñado cuando es `null` (Fase 2/3). Las fotos reales dependen de que el flujo de upload a Cloudinary y el catálogo de modo owner (ver "Re-alcance: modo owner" arriba) estén construidos y en uso por los negocios. |
+| Pill "Próximamente" (negocio/producto no activo)    | Recorte permanente                               | El contrato solo expone `status: ACTIVE`/`isActive: true` al customer (`docs/API_CONTRACT.md`, sección Marketplace) — un negocio o producto `PENDING`/inactivo nunca llega al cliente, así que no hay estado que mostrar.                                                          |
+
 ## Backlog post-MVP
 
 - Mapa interactivo con pin arrastrable para direcciones (`react-native-maps`
@@ -243,6 +267,8 @@ selector en el registro.
 - Favoritos / negocios recientes.
 - Notificaciones de promociones (opt-in separado del push transaccional
   de pedidos).
+- Banner promocional en Home (prototipo) — requiere un modelo de
+  promociones (tabla + endpoint) que hoy no existe en el contrato.
 - Multi-negocio por pedido.
 - Lo que quede fuera de alcance de las fases 0-9 según se vaya
   descubriendo durante el desarrollo.
