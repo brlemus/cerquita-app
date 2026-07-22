@@ -2,8 +2,35 @@
 
 ### Progreso
 
-- Sin empezar. Este archivo es el plan aprobado, punto de partida para
-  implementar.
+- **Checkpoint A** — cerrado. `zustand` + `@react-native-async-storage/async-storage`
+  agregados (`expo-doctor` 18/18). `src/features/cart/store/cartStore.ts`:
+  `CartLine`/`CartState`, acciones `addLine`/`updateQuantity`/`removeLine`/
+  `clearCart`, selectores puros `subtotalCents`/`itemCount`/`wouldReplaceCart`,
+  persist con AsyncStorage (clave `@cerquita/cart`). 14 tests. Typecheck +
+  lint en verde. Sin verificación visual.
+- **Checkpoint B** — cerrado. `Stepper` nuevo en `shared/ui` (botones 36px +
+  `hitSlop` para 44pt táctil). `buildCartLinesForVariants`/
+  `buildCartLineForSimpleProduct` (`marketplace/utils/buildCartLines.ts`,
+  pure functions testeadas) convierten selección → `CartLine[]`.
+  `ProductDetailScreen` reescrito: selector "cantidad por opción" sobre el
+  primer grupo de variantes (opciones con `stock:0` deshabilitadas
+  "Agotado"), stepper simple si no hay variantes (cap por `product.stock`),
+  botón "Agregar" con label dinámico, `useBusiness(businessId)` para el
+  nombre del negocio, diálogo `Alert.alert` de cambio de negocio,
+  `router.back()` tras agregar. 10 tests nuevos (`Stepper` + `buildCartLines`).
+- **Checkpoint C** — cerrado. `CartLineRow` (thumbnail + nombre + variante +
+  `Stepper` + subtotal de línea), `CartScreen` (vacío vía `EmptyState`,
+  líneas editables, banner de mínimo vía `useBusiness(cart.businessId)`
+  --ahora acepta `businessId: string | null` para poder deshabilitarse--,
+  estado "negocio ya no disponible" con acción de vaciar carrito, sin CTA
+  de pagar). Ruta `app/(app)/cart.tsx`. `CartIconButton` (ícono + badge,
+  selector granular de `itemCount`) en el header de `HomeScreen`, cuyo
+  handler de logout ahora también llama `clearCart()` (`HomeScreen.test.tsx`
+  nuevo confirma el wiring). Barra "Ver mi carrito" en
+  `BusinessDetailScreen` cuando `cart.businessId` coincide con el negocio
+  actual. **Gate de cierre de fase**: `pnpm test` (31 suites / 152 tests),
+  `pnpm lint`, `pnpm exec tsc --noEmit` y `expo-doctor` (18/18) todos en
+  verde.
 
 ## Context
 
