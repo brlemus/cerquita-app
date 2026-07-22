@@ -8,13 +8,16 @@ import { ApiRequestError } from '@/shared/api';
 import { Button, colors, EmptyState, ErrorState, radius, spacing, Text } from '@/shared/ui';
 import { formatMoneyCents } from '@/shared/utils';
 import { CartLineRow } from '../components/CartLineRow';
+import { CartSuggestions } from '../components/CartSuggestions';
 import { subtotalCents, useCartStore } from '../store/cartStore';
 
 /**
- * Sin CTA de pagar todavía (Fase 4) -- ver docs/phases/phase-3-cart.md.
  * minOrderCents se resuelve vía useBusiness (fuente fresca); el nombre
  * persistido en el store es el fallback instantáneo mientras esa query
- * resuelve, para no parpadear el header.
+ * resuelve, para no parpadear el header. "Ir a pagar" (Fase 4) se
+ * deshabilita por los mismos chequeos defensivos que ya usa el banner de
+ * mínimo -- el negocio cerrado/mínimo real los valida el backend, esto
+ * solo evita el intento obvio.
  */
 export function CartScreen() {
   const router = useRouter();
@@ -36,6 +39,8 @@ export function CartScreen() {
   const subtotal = subtotalCents(lines);
   const minOrderCents = businessQuery.data?.minOrderCents ?? 0;
   const needsMore = lines.length > 0 && subtotal < minOrderCents;
+  const businessClosed = businessQuery.data?.isOpen === false;
+  const checkoutDisabled = needsMore || businessClosed;
 
   function goToHome() {
     router.replace('/');
@@ -100,6 +105,13 @@ export function CartScreen() {
                 </Text>
               </View>
             ) : null}
+            {businessId ? (
+              <CartSuggestions
+                businessId={businessId}
+                businessName={businessName ?? ''}
+                excludeProductIds={lines.map((line) => line.productId)}
+              />
+            ) : null}
           </ScrollView>
           <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.lg }]}>
             <View style={styles.subtotalRow}>
@@ -108,6 +120,20 @@ export function CartScreen() {
               </Text>
               <Text variant="subtitle">{formatMoneyCents(subtotal)}</Text>
             </View>
+            {businessClosed ? (
+              <Text variant="bodySm" color="danger" style={styles.checkoutHint}>
+                Este negocio no está aceptando pedidos ahora
+              </Text>
+            ) : null}
+            <Button
+              title="Ir a pagar"
+              size="lg"
+              disabled={checkoutDisabled}
+              // /checkout se crea en el checkpoint D de esta misma fase --
+              // cast temporal, se saca ahí (ver docs/phases/phase-4-checkout.md).
+              onPress={() => router.push('/checkout' as never)}
+              style={styles.checkoutButton}
+            />
           </View>
         </>
       )}
@@ -162,5 +188,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  checkoutHint: {
+    marginTop: spacing.sm,
+  },
+  checkoutButton: {
+    marginTop: spacing.md,
   },
 });

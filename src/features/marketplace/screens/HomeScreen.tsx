@@ -8,12 +8,14 @@ import Svg, { Path } from 'react-native-svg';
 
 import { CartIconButton } from '@/features/cart/components/CartIconButton';
 import { useCartStore } from '@/features/cart/store/cartStore';
+import { PinIcon } from '@/features/checkout/components/icons';
+import { useAddresses } from '@/features/checkout/hooks/useAddresses';
 import { colors, EmptyState, ErrorState, radius, spacing, Text } from '@/shared/ui';
 import type { Business } from '../api/types';
 import { BusinessCard } from '../components/BusinessCard';
 import { BusinessCardSkeleton } from '../components/BusinessCardSkeleton';
 import { CategoryChips } from '../components/CategoryChips';
-import { SearchIcon } from '../components/icons';
+import { ChevronDownIcon, SearchIcon } from '../components/icons';
 import { useBusinesses } from '../hooks/useBusinesses';
 import { usePlatformCategories } from '../hooks/usePlatformCategories';
 
@@ -41,6 +43,12 @@ export function HomeScreen() {
 
   const categoriesQuery = usePlatformCategories();
   const businessesQuery = useBusinesses({ platformCategoryId: categoryId });
+  const addressesQuery = useAddresses();
+  const addresses = addressesQuery.data?.data ?? [];
+  // Preferencia visual únicamente -- el contrato no soporta orden por
+  // cercanía (ver "Paridad con el prototipo"), esto no filtra ni ordena
+  // el marketplace.
+  const deliverToAddress = addresses.find((address) => address.isDefault) ?? addresses[0];
 
   const categories = categoriesQuery.data ?? [];
   const categoryNameById = useMemo(
@@ -75,6 +83,27 @@ export function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
+      <Pressable
+        onPress={() => router.push('/addresses')}
+        style={styles.deliverToRow}
+        accessibilityRole="button"
+        accessibilityLabel="Cambiar dirección de entrega"
+      >
+        <PinIcon />
+        <View style={styles.deliverToText}>
+          <Text variant="caption" color="secondary">
+            Entregar en
+          </Text>
+          <View style={styles.deliverToValue}>
+            <Text variant="bodyLg" numberOfLines={1}>
+              {deliverToAddress
+                ? (deliverToAddress.label ?? deliverToAddress.line)
+                : 'Agregar dirección'}
+            </Text>
+            <ChevronDownIcon />
+          </View>
+        </View>
+      </Pressable>
       <View style={styles.header}>
         <Pressable
           onPress={() => router.push('/search')}
@@ -150,6 +179,21 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: colors.surface.default,
+  },
+  deliverToRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.screenPadding,
+    paddingBottom: spacing.sm,
+  },
+  deliverToText: {
+    flex: 1,
+  },
+  deliverToValue: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
   header: {
     flexDirection: 'row',

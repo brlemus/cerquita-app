@@ -29,6 +29,10 @@ jest.mock('../hooks/useBusinesses', () => ({
   }),
 }));
 
+jest.mock('@/features/checkout/hooks/useAddresses', () => ({
+  useAddresses: () => ({ data: { data: [] } }),
+}));
+
 jest.mock('@react-native-async-storage/async-storage', () =>
   // eslint-disable-next-line @typescript-eslint/no-require-imports -- jest.mock factory se hoistea, no puede referenciar un import de módulo externo
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
