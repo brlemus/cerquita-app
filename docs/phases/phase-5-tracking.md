@@ -181,6 +181,20 @@ SDK 56`. Pendiente tu build + smoke visual en ambos teléfonos antes de
   Pendiente (pasos 2-5 del plan de arriba): Firebase Console (2 apps
   nuevas + re-upload de la APNs key), `eas env:set` con los archivos
   nuevos, `eas build --platform ios`.
+- **Pasos 2-4 hechos, y confirman en la práctica el mecanismo de
+  validación que motivó todo este plan**: Firebase Console + los dos
+  `eas env:set` con los archivos nuevos, ya hechos. El build de Android
+  que había quedado en cola (previo al commit del rename) terminó
+  fallando -- quedó pidiendo el package viejo (`com.cerquita.app`)
+  mientras el `google-services.json` que EAS ya resolvía vía env var
+  era el nuevo (`sv.cerquita.app`); el plugin de Google Services valida
+  en build time que el `applicationId` tenga un client matching en el
+  JSON, así que no hay build parcialmente válido posible con esa
+  combinación -- build zombie, descartado (la "convivencia" que
+  habíamos confirmado dejó de aplicar apenas ese build específico
+  quedó viejo respecto al JSON, no por el cambio de código en sí).
+  Ambos builds (Android + iOS) relanzados de cero, ya alineados
+  (package/bundleId nuevo + JSON nuevo en los dos).
 
 ## Context
 
