@@ -40,11 +40,11 @@ const config = {
   },
   ios: {
     usesAppleSignIn: true,
-    bundleIdentifier: 'com.cerquita.app',
+    bundleIdentifier: 'sv.cerquita.app',
     googleServicesFile: googleServiceInfoPlist,
   },
   android: {
-    package: 'com.cerquita.app',
+    package: 'sv.cerquita.app',
     googleServicesFile: googleServicesJson,
   },
   extra: {

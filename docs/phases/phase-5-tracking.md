@@ -171,6 +171,17 @@ SDK 56`. Pendiente tu build + smoke visual en ambos teléfonos antes de
   — no se toca ni se borra. Caveat: no borrar esa entrada de Firebase
   hasta cerrar ese gate.
 
+- **Paso 1 hecho**: `sv.cerquita.app` disponible, registrado en Apple
+  Developer con Push Notifications habilitado (sin broadcast).
+  `app.config.js` → `ios.bundleIdentifier`/`android.package` =
+  `sv.cerquita.app`. Gate: `expo config --type public` resuelve el ID
+  nuevo en ambas plataformas, suite completa (40/40 -- 206/206 tests),
+  lint, typecheck, `expo-doctor` 21/21 -- todo en verde sin necesitar
+  los archivos nuevos de Firebase todavía (mismo motivo de siempre).
+  Pendiente (pasos 2-5 del plan de arriba): Firebase Console (2 apps
+  nuevas + re-upload de la APNs key), `eas env:set` con los archivos
+  nuevos, `eas build --platform ios`.
+
 ## Context
 
 El carrito y el checkout (Fase 4) terminan en `OrderConfirmationScreen`
