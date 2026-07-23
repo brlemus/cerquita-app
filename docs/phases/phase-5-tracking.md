@@ -92,7 +92,12 @@ SDK 56`. Pendiente tu build + smoke visual en ambos teléfonos antes de
   206/206 tests), lint, typecheck -- todos en verde con los archivos
   reales ya presentes (no solo sin ellos como el checkpoint anterior).
   Pendiente: tu segundo rebuild nativo (ahora con Firebase en el árbol)
-  y el gate visual de push.
+  y el gate visual de push. Build de Android en cola de EAS.
+- **Checkpoint C2 agregado a mitad de fase**: Apple Developer enrollment
+  aprobado y APNs key subida a Firebase antes de lo previsto (ver "Push
+  FCM iOS — activación" y la entrada de Checkpoint C2 en
+  `## Checkpoints`). Solo plan por ahora -- implementación arranca
+  cuando el gate visual del Checkpoint C (Android) esté en verde.
 
 ## Context
 
@@ -101,10 +106,13 @@ mostrando el pedido recién creado (`status: PENDIENTE`), sin tracking ni
 polling — quedó anotado a propósito como pendiente de esta fase. Esta fase
 le da al pedido su ciclo de vida visible: pantalla de seguimiento con
 polling respetando el ETag/rate-limit que el contrato ya expone, cancelación
-por el cliente, y push FCM (Android primero, iOS bloqueado-documentado por
-la APNs key). También es el punto de inflexión operativo que el plan
-maestro marcó desde la Fase 0: de acá en adelante la app deja de poder
-correr en Expo Go (publicado en las tiendas) y pasa a development build.
+por el cliente, y push FCM (Android primero, iOS originalmente
+bloqueado-documentado por la APNs key — **actualizado**: el enrollment
+de Apple se aprobó a mitad de fase, la activación de iOS pasó a
+Checkpoint C2 dentro de esta misma fase, ver esa sección). También es el
+punto de inflexión operativo que el plan maestro marcó desde la Fase 0:
+de acá en adelante la app deja de poder correr en Expo Go (publicado en
+las tiendas) y pasa a development build.
 
 Investigación previa ya resuelta contra fuentes reales (no asumida):
 
@@ -472,6 +480,130 @@ eas secret:create --scope project --type file --name GOOGLE_SERVICES_INFO_PLIST 
 }
 ```
 
+## Push FCM iOS — activación (Checkpoint C2)
+
+Se agrega a mitad de fase: el enrollment de Apple Developer se aprobó
+antes de lo previsto y la APNs key (`.p8`, Sandbox & Production, Key
+ID/Team ID) ya está subida en Firebase — el bloqueador que sostenía el
+`if` de plataforma comentado ya no existe. Gatillado explícitamente por
+el usuario, implementación recién después de que el gate visual del
+Checkpoint C (Android) esté en verde — mismo criterio de aislamiento que
+A/B/C: no mezclar una regresión de iOS con algo que en realidad ya
+estaba roto en Android.
+
+**Verificación técnica hecha, no supuesta**: RNFirebase en iOS
+auto-registra para remote messages por defecto
+(`messaging_ios_auto_register_for_remote_messages`; este proyecto no
+tiene `firebase.json` propio, así que el default aplica) — `getToken()`
+no necesita `registerDeviceForRemoteMessages()` explícito.
+`getFcmToken()` ya quedó escrito así en Checkpoint C (camino uniforme,
+intencional) — **cero cambios de código ahí**.
+
+### Qué se destapa (5 puntos exactos)
+
+1. `src/features/auth/hooks/useLogout.ts:30` — quitar
+   `if (Platform.OS === 'android')`; el unregister-antes-de-signOut
+   corre en ambas plataformas. El import de `Platform` queda sin uso,
+   se borra.
+2. `src/features/push/components/PushProvider.tsx:26` — el guard pasa
+   de `if (!isSignedIn || Platform.OS !== 'android')` a
+   `if (!isSignedIn)`.
+3. `src/features/push/components/NotificationPermissionCard.tsx:26` —
+   se quita el `if (Platform.OS !== 'android') return;`; la tarjeta se
+   muestra en ambas plataformas.
+4. `PushProvider.tsx:36` y `NotificationPermissionCard.tsx:57` — el
+   literal hardcodeado `platform: 'android'` en el `registerDevice.mutate(...)`
+   pasa a dinámico. Se extrae `getDevicePlatform()` (nuevo,
+   `src/features/push/getDevicePlatform.ts`) en vez de duplicar el
+   ternario — se usa en 2 lugares, cumple el criterio de extracción ya
+   establecido en el proyecto.
+5. Nada más cambia: los listeners de `PushProvider`
+   (`onMessage`/`onNotificationOpenedApp`/`getInitialNotification`) y
+   `getFcmToken()` ya eran uniformes desde Checkpoint C — se escribieron
+   así a propósito para este momento exacto.
+
+### ¿Rebuild de Android también?
+
+**No.** Los 5 cambios de arriba son 100% JS — ningún plugin nuevo,
+ninguna dependencia nueva, `app.config.js` no cambia (`googleServicesFile`
+de ambas plataformas ya está desde Checkpoint C). El dev client de
+Android que ya está en la cola de EAS los recibe con un reload de Metro
+normal, sin build nueva. Solo hace falta la build nueva de **iOS** — que
+además es la primera build nativa de iOS de todo el proyecto (Checkpoint
+A la difirió explícitamente: "sin build posible hasta que Apple apruebe
+tu enrollment").
+
+### `eas build --profile development --platform ios` — qué va a pedir la primera vez
+
+Sin credenciales de iOS configuradas todavía en este proyecto EAS, el
+flujo interactivo:
+
+1. **Login con tu Apple ID** (usuario/contraseña + 2FA) — lo pide una
+   vez, después lo cachea.
+2. **Selección de Apple Team** (si tenés más de uno; con el enrollment
+   recién aprobado debería ser uno solo).
+3. **Certificado de firma**: para el perfil `development`
+   (`developmentClient: true`, `distribution: "internal"` en nuestro
+   `eas.json`), EAS ofrece generar uno nuevo automáticamente vía la
+   Apple Developer API — aceptás y sigue.
+4. **Registro del dispositivo (lo que preguntaste)**: un build
+   `internal`/development necesita el UDID de tu iPhone en un
+   provisioning profile ad-hoc. Corré esto ANTES del build, para no
+   tener la sorpresa a mitad de la cola:
+   ```
+   eas device:create
+   ```
+   Te da un link/QR — **lo abrís en Safari desde el iPhone** (no
+   funciona desde otro dispositivo/navegador). Instala un perfil de
+   configuración que reporta el UDID a Expo/Apple directamente, sin
+   Xcode y sin buscar el UDID a mano. Confirmás en la CLI cuando
+   termina.
+5. Con el dispositivo ya registrado, EAS genera/actualiza el
+   provisioning profile ad-hoc incluyéndolo, y registra el App ID
+   `com.cerquita.app` en tu cuenta si todavía no existe ahí.
+6. **Capability de Push Notifications**: EAS suele habilitarla sola en
+   el App ID al detectar los plugins de `@react-native-firebase/messaging`/
+   `expo-notifications`. Si el build falla por un error de
+   provisioning/capability, ese es el primer lugar a mirar (Apple
+   Developer → Certificates, IDs & Profiles → Identifiers →
+   `com.cerquita.app` → Capabilities → Push Notifications).
+7. Gotcha no relacionado con EAS: si la cuenta recién aprobada todavía
+   no aceptó el Program License Agreement vigente, el build puede
+   fallar ahí — se resuelve entrando una vez a developer.apple.com.
+
+**Riesgo de compatibilidad ya anotado en el plan maestro** (linking
+estático de iOS + RNFirebase, headers no modulares): aplica
+específicamente a proyectos con `ios.useFrameworks: "static"` en
+`app.config.js` — **este proyecto no lo tiene seteado** (default
+dinámico), así que probablemente no aplica. No se agrega
+`expo-build-properties` preventivamente (sin necesidad real todavía,
+regla de `CLAUDE.md`); si el build de iOS falla con errores de "non-modular
+include in framework module" o similares, ese es el momento de
+agregarlo con el workaround ya investigado
+(`CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES=YES` vía
+`post_install` hook), no antes.
+
+### Gate visual C2
+
+1. **Android, sin rebuild**: smoke rápido de login/logout sobre el
+   mismo dev client — confirmar que `POST /devices` sigue mandando
+   `platform: "android"` (no `"ios"`) tras el refactor a
+   `getDevicePlatform()`.
+2. Instalar el nuevo dev client de iOS en el iPhone registrado.
+3. Confirmar un pedido → la tarjeta de permiso aparece también en iOS
+   ahora → "Activar notificaciones" → diálogo nativo de iOS (Allow/Don't
+   Allow) → conceder.
+4. `PATCH` el estado del pedido desde Swagger (owner) → push real llega
+   al iPhone.
+5. Foreground: notificación local mostrada (mismo camino ya uniforme de
+   `onMessage` + `scheduleNotificationAsync`) → tap → aterriza en
+   `/orders/:id`.
+6. Background/quit: mandar la app a background (o matarla) antes del
+   `PATCH`, tocar la notificación al llegar → mismo destino, vía
+   `onNotificationOpenedApp`/`getInitialNotification`.
+7. Logout en iOS → confirmar en logs/Railway que ahora sí se dispara
+   `DELETE /devices` (antes quedaba excluido por el guard de Android).
+
 ## Workflow de dev build — qué corrés vos
 
 Expo Go (pública, en las tiendas) queda descontinuada para este proyecto
@@ -586,6 +718,29 @@ la fuente de verdad de todos modos.
   pantalla del pedido), incluida la tarjeta de permiso apareciendo tras
   confirmar el primer pedido.
 
+### Checkpoint C2 — Push FCM (iOS) + primer dev build de iPhone
+
+Agregado a mitad de fase (Apple Developer aprobado + APNs key subida
+antes de lo previsto) — ver "Push FCM iOS — activación" arriba para el
+detalle completo. **No arranca hasta que el gate visual del Checkpoint
+C (Android) esté en verde.**
+
+- Quitar los 3 guards de plataforma (`useLogout.ts`,
+  `PushProvider.tsx`, `NotificationPermissionCard.tsx`) + extraer
+  `getDevicePlatform()` (nuevo, usado en 2 lugares) para los 2 literales
+  `platform: 'android'` hardcodeados. Sin cambios en `getFcmToken()`
+  (ya uniforme) ni en `app.config.js` (`googleServicesFile` de iOS ya
+  estaba).
+- Gate (yo): typecheck + tests afectados + suite completa + lint +
+  `expo-doctor` — sin cambios de dependencias ni de config nativa, gate
+  más liviano que A/B/C.
+- Gate (vos): `eas device:create` (registrar el iPhone) → `eas build
+--profile development --platform ios` (primera build nativa de iOS
+  del proyecto — credenciales/certificado/App ID los resuelve EAS
+  interactivo) → instalar → gate visual de 7 pasos de la sección de
+  arriba (incluye un smoke de Android sin rebuild, para confirmar que
+  el refactor de `getDevicePlatform()` no le rompió nada).
+
 ## Archivos clave
 
 - Crear: `src/features/orders/**`, `src/features/push/**`,
@@ -627,13 +782,18 @@ la fuente de verdad de todos modos.
   `details` del 409 de `POST /orders/:id/cancel` tampoco (mismo patrón
   que Fase 4 con `POST /orders`) — no aplica distinguir causas acá, solo
   hay una transición posible para el customer.
-- **iOS bloqueado-documentado**: sin APNs key (`.p8`) ni cuenta de Apple
-  Developer todavía — permiso/registro de push en iOS queda con el `if`
-  de plataforma comentado, listo para sacar en Fase 9. Tracking en iOS
-  sigue siendo 100% funcional vía polling mientras tanto.
-- **`expo-build-properties` diferido a Fase 9**: necesario recién cuando
-  se compile iOS nativo con RNFirebase (workaround de static linking ya
-  documentado en el plan maestro).
+- **Actualizado — ya no bloqueado**: el enrollment de Apple Developer se
+  aprobó y la APNs key ya está subida antes de lo previsto. La
+  activación de push en iOS pasó de "Fase 9" a **Checkpoint C2, dentro
+  de esta misma fase** — ver "Push FCM iOS — activación" arriba.
+  Tracking en iOS siguió siendo 100% funcional vía polling mientras
+  tanto (y sigue siéndolo como fallback si el permiso se niega).
+- **`expo-build-properties`**: sigue sin agregarse preventivamente (el
+  proyecto no usa `ios.useFrameworks: "static"`, así que el riesgo de
+  linking estático documentado en el plan maestro probablemente no
+  aplica). Ya no es "diferido a Fase 9" sino una contingencia del
+  Checkpoint C2: se agrega solo si el primer build de iOS falla con
+  errores de headers no modulares.
 - **Fuera de esta fase**: historial de pedidos (Fase 6) — pero ya deja
   `useOrder`/`useOrderStatus` en `src/features/orders/` listos para
   reusar ahí.
