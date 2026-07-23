@@ -1,4 +1,4 @@
-export { configureAuth, request, type RequestOptions } from './client';
+export { configureAuth, request, requestRaw, type RequestOptions } from './client';
 export { ApiRequestError, mapError, type ApiError } from './errors';
 export { buildQueryString, type QueryParams } from './queryString';
 export type {

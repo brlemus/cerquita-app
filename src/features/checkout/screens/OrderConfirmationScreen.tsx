@@ -1,16 +1,16 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { useBusiness } from '@/features/marketplace/hooks/useBusiness';
+import { useOrder } from '@/features/orders/hooks/useOrder';
 import { Button, colors, ErrorState, radius, spacing, Text } from '@/shared/ui';
 import { formatMoneyCents } from '@/shared/utils';
-import { useOrder } from '../hooks/useOrder';
 
 /**
- * Sin tracking/polling todavía (Fase 5) -- muestra solo lo que
- * POST /orders ya devolvió. Fuente propia (GET /orders/:id) en vez de
- * threadear los datos de la mutación por query params: sobrevive incluso
- * a un cold-start improbable sobre este deep link.
+ * Fuente propia (GET /orders/:id) en vez de threadear los datos de la
+ * mutación por query params: sobrevive incluso a un cold-start improbable
+ * sobre este deep link. El tracking en vivo (polling/cancelación) vive en
+ * `OrderTrackingScreen` (Fase 5) -- acá solo el link de entrada.
  */
 export function OrderConfirmationScreen() {
   const router = useRouter();
@@ -64,6 +64,15 @@ export function OrderConfirmationScreen() {
       </View>
 
       <View style={styles.footer}>
+        <Pressable
+          onPress={() => router.push(`/orders/${order.id}`)}
+          accessibilityRole="button"
+          style={styles.trackLink}
+        >
+          <Text variant="bodySm" color="brand">
+            Ver seguimiento ›
+          </Text>
+        </Pressable>
         <Button title="Volver al inicio" size="lg" onPress={() => router.replace('/')} />
       </View>
     </View>
@@ -129,5 +138,12 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: spacing.xxl,
     paddingBottom: spacing.xxl,
+    gap: spacing.sm,
+  },
+  trackLink: {
+    alignSelf: 'center',
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

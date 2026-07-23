@@ -15,9 +15,11 @@ import { useEffect, type PropsWithChildren } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { configureAuth } from '@/shared/api';
+import { initQueryFocusManager } from '@/shared/api/queryFocusManager';
 import { tokenCache } from '@/shared/auth/tokenCache';
 
 SplashScreen.preventAutoHideAsync();
+initQueryFocusManager();
 // Requerido por el flujo OAuth de Clerk (useSSO/expo-auth-session) para
 // cerrar sesiones de browser colgadas al volver a la app.
 WebBrowser.maybeCompleteAuthSession();

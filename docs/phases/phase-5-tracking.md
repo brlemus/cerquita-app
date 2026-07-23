@@ -24,6 +24,26 @@ SDK 56`. Pendiente tu build + smoke visual en ambos teléfonos antes de
   vive el bug, reversible cuando eas-cli actualice su dependencia. Todas
   las menciones de `app.config.ts` en este documento se actualizaron a
   `app.config.js`.
+- **Checkpoint A — cerrado del todo**: tu build + smoke en Android sin
+  regresiones (requests OK bajo `expo/fetch`, edge-to-edge/safe areas
+  correctas). Smoke de iOS diferido -- sin build posible hasta que Apple
+  apruebe tu enrollment de Developer (en trámite); no bloquea lo que
+  sigue, que es JS puro sobre el mismo dev client Android.
+- **Checkpoint B** — gate automático cerrado (suite 38/38 -- 198/198
+  tests, lint, typecheck, `expo-doctor` 21/21). Reorganización de
+  `orders` hecha (`Order`/`OrderStatus`/`getOrderById`/`useOrder`
+  movidos de `checkout`), polling con ETag vía `requestRaw` +
+  `focusManager` de TanStack Query (sin `useAppState` propio, ver
+  sección dedicada), cancelación con manejo del 409 de carrera,
+  `OrderTrackingScreen` + stepper de 4 pasos + link "Ver seguimiento"
+  desde la confirmación. Nota de tooling: los tests de hooks con
+  `useMutation` necesitan `mutations: { gcTime: 0 }` en el `QueryClient`
+  de test además de `queries: { gcTime: 0 }` -- si no, el
+  `mutationCache` agenda un timer real de 5 minutos que cuelga
+  ejecuciones scoped de Jest (`pnpm exec jest <path>`) aunque la suite
+  completa no lo note. Pendiente tu gate visual: tracking por polling en
+  ambos teléfonos (transiciones vía `PATCH` del owner en Swagger) y
+  cancelación con su carrera provocada, antes de abrir el Checkpoint C.
 
 ## Context
 

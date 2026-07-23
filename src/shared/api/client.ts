@@ -38,13 +38,15 @@ export type RequestOptions = Omit<RequestInit, 'body' | 'headers'> & {
 };
 
 /**
- * Única puerta al backend. Inyecta Authorization, mapea errores del
- * contrato y trata 304 (polling con ETag, Fase 5) como "sin cambios".
+ * Fetch interno compartido -- única puerta real al backend. Inyecta
+ * Authorization y devuelve la `Response` cruda junto al body ya
+ * parseado, para que un caller que necesite headers de la respuesta
+ * (ETag del polling, Fase 5) no tenga que hacer un fetch suelto propio.
  */
-export async function request<T>(
+export async function requestRaw(
   path: string,
   options: RequestOptions = {},
-): Promise<T | undefined> {
+): Promise<{ response: Response; body: unknown }> {
   const { body, headers, ...rest } = options;
   const token = await getAuthToken();
 
@@ -66,15 +68,27 @@ export async function request<T>(
     });
   }
 
+  const parsedBody = response.status === 304 ? undefined : await parseBody(response);
+  return { response, body: parsedBody };
+}
+
+/**
+ * Única puerta al backend para el caso común. Mapea errores del
+ * contrato y trata 304 (polling con ETag, Fase 5) como "sin cambios".
+ */
+export async function request<T>(
+  path: string,
+  options: RequestOptions = {},
+): Promise<T | undefined> {
+  const { response, body } = await requestRaw(path, options);
+
   if (response.status === 304) {
     return undefined;
   }
 
-  const parsedBody = await parseBody(response);
-
   if (!response.ok) {
-    throw new ApiRequestError(mapError(response.status, parsedBody));
+    throw new ApiRequestError(mapError(response.status, body));
   }
 
-  return parsedBody as T;
+  return body as T;
 }

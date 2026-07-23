@@ -38,6 +38,9 @@ const config = {
   extra: {
     apiUrl,
     clerkPublishableKey,
+    eas: {
+      projectId: '9161baf9-5060-4703-b3c4-cde39f15c082',
+    },
   },
 };
 
