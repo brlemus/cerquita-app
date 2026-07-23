@@ -253,6 +253,30 @@ prompted)` (`src/features/push/utils/`, pura, testeada) -- codifica
   suite completa (41/41 -- 210/210 tests), lint, typecheck,
   `expo-doctor` 21/21.
 
+- **Causa real (corrige la hipótesis anterior): mapeo de estado
+  equivocado, no un flag stale.** El logging nuevo dio la respuesta
+  exacta -- instalación fresca, permiso nunca mostrado, y aun así
+  `Notifications.getPermissionsAsync()` devolvió `status: 'denied'`, no
+  `'undetermined'`. Verificado contra el tipo real de
+  `expo-modules-core` (`PermissionResponse`, no supuesto): Android no
+  tiene un tercer estado nativo -- "nunca preguntado" y "preguntado y
+  denegado pero todavía pedible" llegan los DOS como `denied` por esta
+  API. El discriminador real es `canAskAgain` (`false` = mandar a
+  Ajustes, `true` = el diálogo del SO todavía se puede mostrar), no
+  `status`. `shouldShowPermissionCard` pasa a `(status, canAskAgain,
+prompted) => status !== 'granted' && canAskAgain && !prompted` --
+  misma regla, ahora correcta en ambas plataformas (Android sin
+  `undetermined` nativo, iOS con el estado real) sin ramas por
+  plataforma: `canAskAgain` ya abstrae la diferencia. `PushProvider` no
+  cambia -- su condición (`status !== 'granted'`) nunca dependió de
+  `undetermined`, solo le importa si está realmente concedido. Matriz de
+  tests por plataforma agregada (Android: nunca preguntado / denegado
+  pedible / denegado permanente / concedido; iOS: nunca preguntado /
+  denegado / concedido; `prompted` ganando por encima de todo). Gate:
+  suite completa (41/41 -- 214/214 tests), lint, typecheck, `expo-doctor`
+  21/21. Mientras tanto, el usuario destrabó el gate concediendo el
+  permiso a mano en Ajustes.
+
 ## Context
 
 El carrito y el checkout (Fase 4) terminan en `OrderConfirmationScreen`

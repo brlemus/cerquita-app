@@ -29,14 +29,21 @@ export function NotificationPermissionCard() {
     }
     let cancelled = false;
     (async () => {
-      const [{ status }, prompted] = await Promise.all([
+      const [{ status, canAskAgain }, prompted] = await Promise.all([
         Notifications.getPermissionsAsync(),
         AsyncStorage.getItem(PROMPTED_FLAG_KEY),
       ]);
       if (__DEV__) {
-        console.log('[push] tarjeta de permiso -- status:', status, 'prompted:', prompted);
+        console.log(
+          '[push] tarjeta de permiso -- status:',
+          status,
+          'canAskAgain:',
+          canAskAgain,
+          'prompted:',
+          prompted,
+        );
       }
-      if (!cancelled && shouldShowPermissionCard(status, prompted)) {
+      if (!cancelled && shouldShowPermissionCard(status, canAskAgain, prompted)) {
         setVisible(true);
       }
     })();
