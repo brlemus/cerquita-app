@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackIcon } from '@/features/marketplace/components/icons';
 import { useBusiness } from '@/features/marketplace/hooks/useBusiness';
 import { ApiRequestError } from '@/shared/api';
+import { useBottomInset } from '@/shared/hooks';
 import { Button, colors, ErrorState, radius, spacing, Text } from '@/shared/ui';
 import { OrderStatusStepper } from '../components/OrderStatusStepper';
 import { useCancelOrder } from '../hooks/useCancelOrder';
@@ -21,6 +22,7 @@ import { statusLabel } from '../utils/orderStatus';
 export function OrderTrackingScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const bottomInset = useBottomInset(spacing.lg);
   const { orderId } = useLocalSearchParams<{ orderId: string }>();
 
   const orderQuery = useOrder(orderId);
@@ -109,7 +111,7 @@ export function OrderTrackingScreen() {
         ) : null}
       </ScrollView>
 
-      <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.lg }]}>
+      <View style={[styles.footer, { paddingBottom: bottomInset }]}>
         {canCancel ? (
           <Pressable
             onPress={handleCancel}

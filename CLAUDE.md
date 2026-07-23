@@ -80,6 +80,17 @@ El usuario es backend senior pero NO es experto en FE/mobile. Eso significa:
 - TypeScript strict; los tipos del contrato del API viven en un solo lugar
   (`src/shared/api/types.ts` o el que defina el plan) y espejan los DTOs
   del backend.
+- **Todo elemento anclado al borde inferior de una pantalla** (footer con
+  CTA, barra flotante, botón fijo) usa `useBottomInset(extra)`
+  (`src/shared/hooks`) para su `paddingBottom`/`marginBottom` — nunca
+  `insets.bottom + spacing.X` escrito a mano. Con edge-to-edge en Android
+  (default desde Expo SDK 55) el contenido dibuja detrás de la barra de
+  gestos del sistema; sin esto el tap cae en la barra del SO, no en el
+  botón (bug real de gate visual, Fase 5 —
+  `docs/phases/phase-5-tracking.md`). No hay un componente `BottomBar`
+  único porque las pantallas reales usan formas distintas (footer en
+  flujo, footer `position:absolute` con sombra, pill flotante con
+  `margin`) — el hook cubre el cálculo compartido sin forzar un layout.
 
 ## Contrato del backend (reglas duras, ver docs/API_CONTRACT.md)
 

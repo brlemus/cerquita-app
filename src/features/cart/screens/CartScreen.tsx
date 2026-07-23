@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackIcon } from '@/features/marketplace/components/icons';
 import { useBusiness } from '@/features/marketplace/hooks/useBusiness';
 import { ApiRequestError } from '@/shared/api';
+import { useBottomInset } from '@/shared/hooks';
 import { Button, colors, EmptyState, ErrorState, radius, spacing, Text } from '@/shared/ui';
 import { formatMoneyCents } from '@/shared/utils';
 import { CartLineRow } from '../components/CartLineRow';
@@ -22,6 +23,7 @@ import { subtotalCents, useCartStore } from '../store/cartStore';
 export function CartScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const bottomInset = useBottomInset(spacing.lg);
 
   const businessId = useCartStore((state) => state.businessId);
   const businessNameFallback = useCartStore((state) => state.businessName);
@@ -113,7 +115,7 @@ export function CartScreen() {
               />
             ) : null}
           </ScrollView>
-          <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.lg }]}>
+          <View style={[styles.footer, { paddingBottom: bottomInset }]}>
             <View style={styles.subtotalRow}>
               <Text variant="bodyMd" color="secondary">
                 Subtotal

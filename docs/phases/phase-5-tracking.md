@@ -25,10 +25,31 @@ SDK 56`. Pendiente tu build + smoke visual en ambos teléfonos antes de
   las menciones de `app.config.ts` en este documento se actualizaron a
   `app.config.js`.
 - **Checkpoint A — cerrado del todo**: tu build + smoke en Android sin
-  regresiones (requests OK bajo `expo/fetch`, edge-to-edge/safe areas
-  correctas). Smoke de iOS diferido -- sin build posible hasta que Apple
-  apruebe tu enrollment de Developer (en trámite); no bloquea lo que
-  sigue, que es JS puro sobre el mismo dev client Android.
+  regresiones (requests OK bajo `expo/fetch`). Smoke de iOS diferido --
+  sin build posible hasta que Apple apruebe tu enrollment de Developer
+  (en trámite); no bloquea lo que sigue, que es JS puro sobre el mismo
+  dev client Android.
+- **Bug real de edge-to-edge encontrado en el gate visual del
+  Checkpoint B** (se escapó del smoke de A porque esa pantalla no se
+  visitó post-upgrade): en `OrderConfirmationScreen`, "Volver al inicio"
+  quedaba superpuesto con la barra de gestos de Android -- el tap
+  accionaba la barra del SO, no el botón. Causa raíz: esa pantalla
+  (escrita en Fase 4, antes de SDK 55) nunca tuvo manejo de safe area en
+  absoluto, ni arriba ni abajo. Auditadas TODAS las pantallas con
+  elementos anclados al borde inferior: `CheckoutScreen`, `CartScreen`,
+  `ProductDetailScreen`, el "Ver mi carrito" de `BusinessDetailScreen` y
+  `OrderTrackingScreen` ya lo hacían bien (`insets.bottom + spacing.X`
+  a mano); solo `OrderConfirmationScreen` estaba rota. Fix como patrón
+  compartido, no parche puntual: `useBottomInset(extra)`
+  (`src/shared/hooks`, documentado como obligatorio en `CLAUDE.md`) --
+  no un componente `BottomBar` único, porque las pantallas reales usan 3
+  layouts de footer distintos (en flujo, `position:absolute` con
+  sombra, pill flotante con `margin`) que un solo componente rígido
+  hubiera forzado a converger sin necesidad real. Las 5 pantallas
+  correctas se migraron al hook (mismos valores, sin cambio visual);
+  `OrderConfirmationScreen` suma además el borde superior
+  (`SafeAreaView edges={['top']}`, que no tenía). Gate: suite 39/39 --
+  200/200 tests, lint, typecheck, `expo-doctor` 21/21.
 - **Checkpoint B** — gate automático cerrado (suite 38/38 -- 198/198
   tests, lint, typecheck, `expo-doctor` 21/21). Reorganización de
   `orders` hecha (`Order`/`OrderStatus`/`getOrderById`/`useOrder`
