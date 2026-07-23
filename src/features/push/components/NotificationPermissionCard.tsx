@@ -1,9 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { useEffect, useState } from 'react';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { colors, radius, spacing, Text } from '@/shared/ui';
+import { getDevicePlatform } from '../getDevicePlatform';
 import { getFcmToken } from '../getFcmToken';
 import { useRegisterDevice } from '../hooks/useRegisterDevice';
 import { shouldShowPermissionCard } from '../utils/shouldShowPermissionCard';
@@ -15,18 +16,14 @@ const PROMPTED_FLAG_KEY = 'push_permission_prompted';
  * pide con un beneficio concreto a la vista, nunca en cold start. Se
  * muestra como mucho una vez -- ni de nuevo en el siguiente pedido si el
  * usuario tocó "Ahora no" o ya se le preguntó (ver PROMPTED_FLAG_KEY).
- * Solo Android por ahora: iOS no puede completar el registro sin la
- * APNs key (Fase 9) y pedir el permiso nativo ahí lo quemaría sin
- * beneficio real (docs/phases/phase-5-tracking.md).
+ * Ambas plataformas desde el Checkpoint C2 (Apple Developer aprobado,
+ * APNs key lista -- docs/phases/phase-5-tracking.md).
  */
 export function NotificationPermissionCard() {
   const [visible, setVisible] = useState(false);
   const registerDevice = useRegisterDevice();
 
   useEffect(() => {
-    if (Platform.OS !== 'android') {
-      return;
-    }
     let cancelled = false;
     (async () => {
       const [{ status, canAskAgain }, prompted] = await Promise.all([
@@ -69,7 +66,7 @@ export function NotificationPermissionCard() {
     const token = await getFcmToken();
     if (token) {
       registerDevice.mutate(
-        { fcmToken: token, platform: 'android' },
+        { fcmToken: token, platform: getDevicePlatform() },
         {
           onError: (error) => {
             if (__DEV__) {

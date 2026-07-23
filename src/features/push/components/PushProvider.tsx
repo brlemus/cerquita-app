@@ -3,8 +3,8 @@ import messaging from '@react-native-firebase/messaging';
 import { useRouter } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import { useEffect, type PropsWithChildren } from 'react';
-import { Platform } from 'react-native';
 
+import { getDevicePlatform } from '../getDevicePlatform';
 import { getFcmToken } from '../getFcmToken';
 import { useRegisterDevice } from '../hooks/useRegisterDevice';
 import { parseNotificationData } from '../utils/parseNotificationData';
@@ -12,10 +12,10 @@ import { parseNotificationData } from '../utils/parseNotificationData';
 /**
  * Listeners y orquestación de push, montado en `app/_layout.tsx` dentro
  * de `ClerkProvider`. El registro reactivo (permiso ya concedido de una
- * sesión anterior) es Android-only por ahora -- ver
- * `NotificationPermissionCard` y docs/phases/phase-5-tracking.md. Los
- * listeners de RNFirebase quedan uniformes entre plataformas (no hacen
- * nada en iOS mientras no llegue push real ahí).
+ * sesión anterior) corre en ambas plataformas desde el Checkpoint C2
+ * (Apple Developer aprobado, APNs key lista -- ver
+ * docs/phases/phase-5-tracking.md). Los listeners de RNFirebase ya eran
+ * uniformes entre plataformas desde el Checkpoint C.
  */
 export function PushProvider({ children }: PropsWithChildren) {
   const { isSignedIn } = useAuth();
@@ -23,7 +23,7 @@ export function PushProvider({ children }: PropsWithChildren) {
   const registerDevice = useRegisterDevice();
 
   useEffect(() => {
-    if (!isSignedIn || Platform.OS !== 'android') {
+    if (!isSignedIn) {
       return;
     }
     (async () => {
@@ -40,7 +40,7 @@ export function PushProvider({ children }: PropsWithChildren) {
           return;
         }
         registerDevice.mutate(
-          { fcmToken: token, platform: 'android' },
+          { fcmToken: token, platform: getDevicePlatform() },
           {
             onError: (error) => {
               if (__DEV__) {

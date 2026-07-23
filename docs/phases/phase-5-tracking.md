@@ -276,6 +276,34 @@ prompted) => status !== 'granted' && canAskAgain && !prompted` --
   suite completa (41/41 -- 214/214 tests), lint, typecheck, `expo-doctor`
   21/21. Mientras tanto, el usuario destrabó el gate concediendo el
   permiso a mano en Ajustes.
+- **Checkpoint C — GATE VISUAL EN VERDE 🎉**: primer push real
+  entregado en Android (background, cancelación de soporte). Cierra
+  también el hallazgo de foreground: RNFirebase no muestra nada solo en
+  foreground (estándar, esperado) -- decisión de producto B tomada por
+  el usuario, "se muestra siempre". `PushProvider` ya tenía el
+  `onMessage` → `scheduleNotificationAsync` (mismo contenido, mismo
+  deep link) desde el Checkpoint C; lo único que faltaba, confirmado
+  contra el tipo real de `expo-notifications`
+  (`NotificationHandler`/`setNotificationHandler`, no supuesto): sin
+  `Notifications.setNotificationHandler(...)` registrado, el default
+  documentado es "not to show the notification" mientras la app está en
+  foreground -- ni push real ni notificación local propia. Sin
+  dependencia nueva, sin rebuild (confirmado antes de tocar nada, tal
+  como se pidió): un solo `setNotificationHandler` en `index.js`, junto
+  al `setBackgroundMessageHandler` ya existente (`shouldShowBanner`/
+  `shouldShowList`/`shouldPlaySound: true`/`shouldSetBadge: false` --
+  campos actuales, no el `shouldShowAlert` deprecado).
+- **Checkpoint C2 destapado**: los 3 guards de plataforma que quedaban
+  comentados (`useLogout.ts`, `PushProvider.tsx`,
+  `NotificationPermissionCard.tsx`) removidos, más
+  `getDevicePlatform()` nuevo (`src/features/push/`, con test) en vez
+  de duplicar el ternario en los 2 lugares que hardcodeaban
+  `platform: 'android'`. Sin cambios en `getFcmToken()` (ya uniforme
+  desde Checkpoint C, confirmado entonces contra la doc real de
+  RNFirebase) ni en `app.config.js`. Gate: suite completa (42/42 --
+  216/216 tests), lint, typecheck, `expo-doctor` 21/21. JS puro -- el
+  dev client de iOS ya instalado (conectado a Metro) lo recibe con un
+  reload, sin build nueva. Pendiente: gate visual de push en iOS.
 
 ## Context
 

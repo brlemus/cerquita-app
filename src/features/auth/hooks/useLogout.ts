@@ -1,6 +1,5 @@
 import { useAuth } from '@clerk/clerk-expo';
 import { useCallback } from 'react';
-import { Platform } from 'react-native';
 
 import { getFcmToken } from '@/features/push/getFcmToken';
 import { useUnregisterDevice } from '@/features/push/hooks/useUnregisterDevice';
@@ -27,18 +26,16 @@ export function useLogout() {
   const { mutateAsync: unregisterDeviceAsync } = useUnregisterDevice();
 
   return useCallback(async () => {
-    if (Platform.OS === 'android') {
-      try {
-        const token = await getFcmToken();
-        if (token) {
-          await Promise.race([
-            unregisterDeviceAsync({ fcmToken: token }),
-            delay(UNREGISTER_TIMEOUT_MS),
-          ]);
-        }
-      } catch {
-        // best-effort: nunca bloquea el logout.
+    try {
+      const token = await getFcmToken();
+      if (token) {
+        await Promise.race([
+          unregisterDeviceAsync({ fcmToken: token }),
+          delay(UNREGISTER_TIMEOUT_MS),
+        ]);
       }
+    } catch {
+      // best-effort: nunca bloquea el logout.
     }
     await signOut();
   }, [signOut, unregisterDeviceAsync]);
