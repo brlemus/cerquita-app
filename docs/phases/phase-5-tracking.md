@@ -304,6 +304,28 @@ prompted) => status !== 'granted' && canAskAgain && !prompted` --
   216/216 tests), lint, typecheck, `expo-doctor` 21/21. JS puro -- el
   dev client de iOS ya instalado (conectado a Metro) lo recibe con un
   reload, sin build nueva. Pendiente: gate visual de push en iOS.
+- **Principio rector nuevo en `CLAUDE.md`** (gobierna toda decisión
+  futura, de cualquier sesión): la vara del proyecto es un producto
+  usable y bonito, no la decisión más expedita -- sin deadline, proyecto
+  familiar. Primera aplicación inmediata: cambio de decisión de
+  producto en el permiso de notificaciones.
+- **Permiso de notificaciones -- tarjeta eliminada, patrón directo**:
+  `NotificationPermissionCard.tsx` y `shouldShowPermissionCard` (+ su
+  test) eliminados enteros. `PushProvider` pasa a disparar
+  `requestPermissionsAsync()` directo al autenticarse (una sola vez por
+  instalación, vía flag `push_permission_requested` -- nombre nuevo a
+  propósito, no hereda estado del flag viejo de la tarjeta), fusionado
+  con el registro silencioso que ya existía en el mismo efecto.
+  `shouldRequestPermission(status, canAskAgain, attempted)` nuevo
+  (puro, testeado, misma matriz por plataforma que su predecesor).
+  Detalle completo y trade-off aceptado (el diálogo de iOS se gasta en
+  el login, sin segunda oportunidad vía API) documentado en "Decisión:
+  permiso de notificaciones sin paso intermedio". Actualiza también la
+  cláusula de `PLAN_MOBILE_CERQUITA.md` sobre pantalla propia antes de
+  notificaciones (superseded para notificaciones, no para ubicación).
+  Gate: suite completa (42/42 -- 213/213 tests), lint, typecheck,
+  `expo-doctor` 21/21. JS puro. Pendiente: gate de instalación fresca en
+  ambas plataformas.
 
 ## Context
 
@@ -366,22 +388,19 @@ Investigación previa ya resuelta contra fuentes reales (no asumida):
   `expo-doctor` + smoke visual tuyo) **antes** de que Firebase toque el
   árbol — si algo regresa después, se sabe si fue el SDK o Firebase, nunca
   los dos mezclados.
-- **Bundle identifier**: `com.cerquita.app` — mismo valor para
-  `ios.bundleIdentifier` y `android.package`, y va a ser el mismo App ID
-  de Apple en la Fase 9 (anotado acá para no rehacerlo entonces).
-- **Permiso de notificaciones**: se pide en el contexto del primer pedido
-  (confirmación → tarjeta de contexto → permiso nativo → si concede, ahí
-  se registra el token), **no** en el login. El registro del token queda
-  atado al estado del permiso, no al evento de login:
-  - Permiso ya concedido en sesiones siguientes → registro silencioso
-    post-login (cubre rotación de token / reinstalación), sin volver a
-    preguntar nada.
-  - Permiso negado → tracking sigue 100% por polling, sin insistir en
-    cada pedido (a lo sumo un recordatorio espaciado con deep link a
-    Ajustes — se deja para la fase de Perfil, no acá).
-  - Copy con el beneficio concreto ("Te avisamos cuando tu pedido esté en
-    camino") + "Ahora no" sin fricción — rechazar la tarjeta propia NO
-    gasta el permiso nativo de iOS (irrecuperable si se niega ahí).
+- **Bundle identifier**: `sv.cerquita.app` (cambiado durante la fase --
+  `com.cerquita.app` no estaba disponible en Apple, ver Progreso) —
+  mismo valor para `ios.bundleIdentifier` y `android.package`, y el
+  mismo App ID de Apple en la Fase 9.
+- **Permiso de notificaciones — actualizado, reemplaza la decisión
+  original de acá abajo**: sin tarjeta de contexto. Diálogo nativo del
+  SO directo al autenticarse, una sola vez por instalación (patrón
+  WhatsApp/Instagram, primera aplicación del "Principio rector" de
+  `CLAUDE.md`). Si concede → registro. Si niega → cero insistencia, sin
+  banners. Sesiones siguientes con el permiso ya concedido → registro
+  silencioso, sin volver a preguntar nada. Detalle completo y trade-offs
+  en "Decisión: permiso de notificaciones sin paso intermedio" más
+  abajo.
 
 ## Cómo se verifica el bump de SDK sin Expo Go (Checkpoint A)
 
@@ -584,25 +603,35 @@ src/features/push/
   api/{types,registerDevice,unregisterDevice}.ts
   hooks/{useRegisterDevice,useUnregisterDevice}.ts
   getFcmToken.ts
-  utils/parseNotificationData.ts   # remoteMessage.data -> {orderId,type} | null — puro, testeado
+  getDevicePlatform.ts               # 'ios' | 'android' -- usado en 2 lugares, con test
+  utils/
+    parseNotificationData.ts         # remoteMessage.data -> {orderId,type} | null — puro, testeado
+    shouldRequestPermission.ts       # decisión de disparar el diálogo nativo -- puro, testeado
   components/
-    NotificationPermissionCard.tsx  # tarjeta de contexto, copy + "Ahora no"
-    PushProvider.tsx                # listeners + orquestación, montado en app/_layout.tsx
+    PushProvider.tsx                 # listeners + orquestación + permiso, montado en app/_layout.tsx
 ```
+
+**Permiso de notificaciones: sin tarjeta intermedia — actualizado,
+reemplaza la tarjeta de contexto del diseño original de esta fase.**
+Ver "Principio rector" en `CLAUDE.md` (primera aplicación) y sección
+dedicada de decisiones más abajo. El diálogo nativo del SO se dispara
+directo al autenticarse, una sola vez por instalación.
 
 `PushProvider` (dentro de `ClerkProvider`, reacciona a `isSignedIn`):
 
 - Listeners: `messaging().onMessage()` (foreground → dispara notificación
   local vía `expo-notifications` `scheduleNotificationAsync` con
-  `trigger:null`, porque Android no muestra sola una notificación
-  mientras la app está en foreground), `onNotificationOpenedApp()` +
+  `trigger:null` -- necesita `Notifications.setNotificationHandler(...)`
+  registrado en `index.js` para mostrarse, ver sección de push del gate
+  de Checkpoint C), `onNotificationOpenedApp()` +
   `getInitialNotification()` (background/quit → tap) — ambos parsean
   `data.orderId`/`data.type==='ORDER_STATUS'` con `parseNotificationData`
   y navegan a `/orders/${orderId}`. Tap de la notificación local
   (`expo-notifications` response listener) hace lo mismo.
-- Registro: solo tras conceder el permiso (ver tarjeta de contexto,
-  disparada desde `OrderConfirmationScreen` post-`onSuccess` del primer
-  pedido) o silencioso en sesiones siguientes si ya estaba concedido.
+- Registro: al autenticarse, si el permiso es pedible
+  (`shouldRequestPermission`) se pide directo; si concede, o si ya
+  estaba concedido de una sesión anterior, registro silencioso. Sin
+  reintentos ni nagging si se niega.
 - `useLogout()` nuevo (`src/features/auth/hooks/`) — envuelve `DELETE
 /devices` (con el token recién leído de `getFcmToken()`, best-effort, no
   bloquea el logout si falla) + `signOut()` de Clerk, **en ese orden**
@@ -616,6 +645,45 @@ src/features/push/
     — best-effort real, no solo "atrapado en un catch": con red mala, un
     request que nunca resuelve dejaría el botón de salir sin salir. Vencido
     el timeout o cualquier error, se sigue a `signOut()` igual.
+
+### Decisión: permiso de notificaciones sin paso intermedio
+
+**Reemplaza la decisión original de esta fase** (tarjeta de contexto
+disparada post-primer-pedido, con "Activar notificaciones"/"Ahora no").
+Cambio de decisión del usuario, primera aplicación del "Principio
+rector" de `CLAUDE.md`: la vara es un producto usable y bonito, no la
+opción más expedita. Se eligió por mejor UX (patrón WhatsApp/Instagram
+-- cero fricción entre el usuario y el valor de la función), no porque
+sea menos código.
+
+- Al autenticarse (una sola vez por instalación, no en cada login): si
+  el permiso todavía es pedible, `requestPermissionsAsync()` directo,
+  sin ninguna pantalla propia antes. Si concede → registro. Si niega →
+  nada más, cero insistencia, sin banners ni nagging en ningún lado.
+- Sesiones siguientes con el permiso ya concedido → registro silencioso,
+  igual que antes.
+- El discriminador de "pedible" sigue siendo `canAskAgain` (no
+  `status`), mismo aprendizaje que el bug real de esta fase --
+  `shouldRequestPermission(status, canAskAgain, attempted)`
+  (`src/features/push/utils/`, puro, testeado con la misma matriz por
+  plataforma). El flag persistido cambia de nombre
+  (`push_permission_requested`, no `push_permission_prompted`) a
+  propósito: no hereda estado de instalaciones/tests anteriores de la
+  tarjeta ya eliminada.
+- `NotificationPermissionCard.tsx` y `shouldShowPermissionCard` (+ su
+  test) se eliminan enteros -- sin reemplazo, no quedan detrás de un
+  flag.
+- **Trade-off aceptado conscientemente**: en iOS el diálogo nativo se
+  gasta en el login -- si el usuario niega ahí, no hay una segunda
+  oportunidad de pedirlo vía API (`canAskAgain` queda `false` en iOS
+  tras una negación). Sin re-enganche por ahora.
+- **Actualiza también** la cláusula de `PLAN_MOBILE_CERQUITA.md` sobre
+  "pantalla propia antes de pedir notificaciones" -- superseded para
+  notificaciones específicamente (la de ubicación en Checkout, Fase 4,
+  no cambia).
+- **Backlog anotado para Fase 7 (Perfil)**: un re-enganche discreto
+  (deep link a Ajustes) para el caso "negó en el login y después
+  cambió de opinión" -- no se resuelve en esta fase.
 
 **`index.js` nuevo** (entry point custom, reemplaza `expo-router/entry`
 directo en `package.json`'s `"main"`) — RNFirebase exige registrar el

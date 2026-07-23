@@ -7,6 +7,23 @@ TypeScript strict. Consume el backend cerquita-api (NestJS, ya en producción)
 Antes de tocar código, leé `PLAN_MOBILE_CERQUITA.md` (stack y fases) y
 `docs/API_CONTRACT.md` (contrato del backend: endpoints, errores, headers).
 
+## Principio rector (gobierna toda decisión, de cualquier sesión)
+
+La vara de este proyecto es un producto **USABLE y BONITO** — no hay
+deadline, es un proyecto familiar. Ante cualquier disyuntiva entre la
+decisión más expedita/fácil y la que hace mejor producto, **gana el
+producto** — en UX, en diseño visual, y en decisiones técnicas por
+igual. No se elige lo más rápido por serlo.
+
+Esto no compite con las reglas de "Eficiencia de ejecución" ni
+"Eficiencia y anti-sobre-ingeniería" de más abajo — esas son sobre
+**cómo** trabajar sin desperdiciar esfuerzo (batchear ediciones, no
+re-leer archivos, no sobre-testear lógica trivial), nunca una excusa
+para entregar una versión recortada del producto. Primera aplicación de
+este principio: la decisión de permiso de notificaciones en
+`docs/phases/phase-5-tracking.md` (patrón directo sin tarjeta
+intermedia, elegido por mejor UX, no por ser menos código).
+
 ## Rol: actuá SIEMPRE como Senior Frontend/Mobile Engineer
 
 El usuario es backend senior pero NO es experto en FE/mobile. Eso significa:

@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '@clerk/clerk-expo';
 import messaging from '@react-native-firebase/messaging';
 import { useRouter } from 'expo-router';
@@ -8,14 +9,21 @@ import { getDevicePlatform } from '../getDevicePlatform';
 import { getFcmToken } from '../getFcmToken';
 import { useRegisterDevice } from '../hooks/useRegisterDevice';
 import { parseNotificationData } from '../utils/parseNotificationData';
+import { shouldRequestPermission } from '../utils/shouldRequestPermission';
+
+const PERMISSION_REQUEST_ATTEMPTED_KEY = 'push_permission_requested';
 
 /**
  * Listeners y orquestación de push, montado en `app/_layout.tsx` dentro
- * de `ClerkProvider`. El registro reactivo (permiso ya concedido de una
- * sesión anterior) corre en ambas plataformas desde el Checkpoint C2
- * (Apple Developer aprobado, APNs key lista -- ver
- * docs/phases/phase-5-tracking.md). Los listeners de RNFirebase ya eran
- * uniformes entre plataformas desde el Checkpoint C.
+ * de `ClerkProvider`. Corre en ambas plataformas desde el Checkpoint C2
+ * (Apple Developer aprobado, APNs key lista).
+ *
+ * Permiso: sin tarjeta intermedia (decisión de producto, patrón
+ * WhatsApp/Instagram -- docs/phases/phase-5-tracking.md). Al
+ * autenticarse, una sola vez por instalación (no por login), si el
+ * permiso es pedible se dispara el diálogo nativo directo; si concede,
+ * el mismo registro de acá abajo sigue. Sesiones siguientes con permiso
+ * ya concedido: registro silencioso, sin volver a preguntar nada.
  */
 export function PushProvider({ children }: PropsWithChildren) {
   const { isSignedIn } = useAuth();
@@ -28,9 +36,19 @@ export function PushProvider({ children }: PropsWithChildren) {
     }
     (async () => {
       try {
-        const { status } = await Notifications.getPermissionsAsync();
+        const [{ status: currentStatus, canAskAgain }, attempted] = await Promise.all([
+          Notifications.getPermissionsAsync(),
+          AsyncStorage.getItem(PERMISSION_REQUEST_ATTEMPTED_KEY),
+        ]);
+
+        let status = currentStatus;
+        if (shouldRequestPermission(status, canAskAgain, attempted)) {
+          await AsyncStorage.setItem(PERMISSION_REQUEST_ATTEMPTED_KEY, '1');
+          ({ status } = await Notifications.requestPermissionsAsync());
+        }
+
         if (__DEV__) {
-          console.log('[push] registro silencioso -- permission status:', status);
+          console.log('[push] registro -- permission status:', status);
         }
         if (status !== 'granted') {
           return;
@@ -44,18 +62,14 @@ export function PushProvider({ children }: PropsWithChildren) {
           {
             onError: (error) => {
               if (__DEV__) {
-                console.log('[push] registerDevice (silencioso) falló:', error);
+                console.log('[push] registerDevice falló:', error);
               }
             },
           },
         );
       } catch (error) {
-        // Este bloque no tenía try/catch -- cualquier excepción acá
-        // quedaba como unhandled rejection, invisible, sin romper la app
-        // pero también sin dejar rastro (bug real de diagnosticabilidad,
-        // ver docs/phases/phase-5-tracking.md).
         if (__DEV__) {
-          console.log('[push] registro silencioso -- excepción:', error);
+          console.log('[push] registro -- excepción:', error);
         }
       }
     })();
