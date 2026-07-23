@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useBusiness } from '@/features/marketplace/hooks/useBusiness';
 import { useOrder } from '@/features/orders/hooks/useOrder';
+import { NotificationPermissionCard } from '@/features/push/components/NotificationPermissionCard';
 import { useBottomInset } from '@/shared/hooks';
 import { Button, colors, ErrorState, radius, spacing, Text } from '@/shared/ui';
 import { formatMoneyCents } from '@/shared/utils';
@@ -64,6 +65,8 @@ export function OrderConfirmationScreen() {
           <View style={styles.divider} />
           <Row label="Total" value={formatMoneyCents(order.totalCents)} emphasized />
         </View>
+
+        <NotificationPermissionCard />
       </View>
 
       <View style={[styles.footer, { paddingBottom: bottomInset }]}>

@@ -1,15 +1,15 @@
-import { useAuth } from '@clerk/clerk-expo';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button, colors, radius, spacing, Text } from '@/shared/ui';
+import { useLogout } from '../hooks/useLogout';
 
 /**
  * Pantalla única para 403 SUSPENDED y 409 de re-registro rechazado — el
  * contrato pide el mismo tratamiento para ambos (docs/API_CONTRACT.md).
  */
 export function SuspendedScreen() {
-  const { signOut } = useAuth();
+  const logout = useLogout();
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
@@ -25,7 +25,7 @@ export function SuspendedScreen() {
         <Text variant="bodyMd" color="secondary" style={styles.body}>
           No podés acceder a Cerquita en este momento. Escribinos a soporte para resolverlo.
         </Text>
-        <Button title="Cerrar sesión" onPress={() => signOut()} style={styles.button} />
+        <Button title="Cerrar sesión" onPress={() => logout()} style={styles.button} />
       </View>
     </SafeAreaView>
   );

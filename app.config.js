@@ -17,6 +17,9 @@ const config = {
     'expo-apple-authentication',
     'expo-image',
     'expo-splash-screen',
+    '@react-native-firebase/app',
+    '@react-native-firebase/messaging',
+    'expo-notifications',
     [
       'expo-location',
       {

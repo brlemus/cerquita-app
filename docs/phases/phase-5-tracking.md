@@ -62,9 +62,23 @@ SDK 56`. Pendiente tu build + smoke visual en ambos teléfonos antes de
   de test además de `queries: { gcTime: 0 }` -- si no, el
   `mutationCache` agenda un timer real de 5 minutos que cuelga
   ejecuciones scoped de Jest (`pnpm exec jest <path>`) aunque la suite
-  completa no lo note. Pendiente tu gate visual: tracking por polling en
-  ambos teléfonos (transiciones vía `PATCH` del owner en Swagger) y
-  cancelación con su carrera provocada, antes de abrir el Checkpoint C.
+  completa no lo note.
+- **Checkpoint B — cerrado del todo**: tu gate visual confirmado (stepper
+  avanzando solo por polling con detención en terminal, cancelación
+  feliz, carrera mostrando el conflicto + el estado real).
+- **Checkpoint C — código listo, frenado en el punto de necesitar tus
+  archivos de Firebase** (tal como pediste). Gate automático cerrado
+  (suite 40/40 -- 206/206 tests, lint, typecheck, `expo-doctor` 21/21)
+  **sin** `googleServicesFile` todavía en `app.config.js` -- confirmado
+  que `expo-doctor` no valida que esos paths existan en disco, así que
+  no hay nada que se rompa por adelantar el resto del código sin ellos.
+  `src/features/push/**` completo, `useLogout()` reemplazando las 4
+  llamadas sueltas a `signOut()`, `index.js` con el background handler,
+  `PushProvider` montado en `app/_layout.tsx`, `.gitignore` ya
+  actualizado. Sigue: vos hacés la checklist de Firebase Console +
+  Railway (abajo) → yo agrego `googleServicesFile` a `app.config.js` y
+  corro un último `expo-doctor` → tu segundo rebuild nativo → gate
+  visual de push.
 
 ## Context
 

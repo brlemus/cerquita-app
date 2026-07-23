@@ -3,9 +3,9 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import { useCartStore } from '@/features/cart/store/cartStore';
 import { HomeScreen } from './HomeScreen';
 
-const mockSignOut = jest.fn();
-jest.mock('@clerk/clerk-expo', () => ({
-  useAuth: () => ({ signOut: mockSignOut }),
+const mockLogout = jest.fn();
+jest.mock('@/features/auth/hooks/useLogout', () => ({
+  useLogout: () => mockLogout,
 }));
 
 jest.mock('expo-router', () => ({
@@ -41,10 +41,10 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 describe('HomeScreen -- logout limpia el carrito', () => {
   beforeEach(() => {
     useCartStore.getState().clearCart();
-    mockSignOut.mockClear();
+    mockLogout.mockClear();
   });
 
-  it('cerrar sesión invoca clearCart() además de signOut()', async () => {
+  it('cerrar sesión invoca clearCart() además de logout()', async () => {
     useCartStore.getState().addLine('b1', 'Paletería Lili', {
       productId: 'p1',
       productName: 'Paleta de sobrilla',
@@ -59,6 +59,6 @@ describe('HomeScreen -- logout limpia el carrito', () => {
 
     expect(useCartStore.getState().lines).toEqual([]);
     expect(useCartStore.getState().businessId).toBeNull();
-    expect(mockSignOut).toHaveBeenCalledTimes(1);
+    expect(mockLogout).toHaveBeenCalledTimes(1);
   });
 });

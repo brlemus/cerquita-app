@@ -9,12 +9,16 @@ import { useAuthMe } from '../hooks/useAuthMe';
 jest.mock('../hooks/useAuthMe');
 const mockUseAuthMe = useAuthMe as jest.Mock;
 
-const mockSignOut = jest.fn();
+const mockLogout = jest.fn();
+jest.mock('../hooks/useLogout', () => ({
+  useLogout: () => mockLogout,
+}));
+
 const mockGetToken = jest.fn();
 let mockUser: { firstName: string | null } | null = { firstName: 'Ana' };
 
 jest.mock('@clerk/clerk-expo', () => ({
-  useAuth: () => ({ signOut: mockSignOut, getToken: mockGetToken }),
+  useAuth: () => ({ getToken: mockGetToken }),
   useUser: () => ({ user: mockUser }),
 }));
 
@@ -99,7 +103,7 @@ describe('AccountGate', () => {
       </AccountGate>,
     );
 
-    expect(mockSignOut).toHaveBeenCalledTimes(1);
+    expect(mockLogout).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId('account-gate-loading')).toBeTruthy();
     expect(screen.queryByText('Tu cuenta está bloqueada')).toBeNull();
   });

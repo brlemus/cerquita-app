@@ -18,6 +18,11 @@ expo-env.d.ts
 /ios
 /android
 
+# Firebase -- config atada a un proyecto específico, credencial-adyacente
+# (ver docs/phases/phase-5-tracking.md, sección Fase 5)
+google-services.json
+GoogleService-Info.plist
+
 # Metro
 .metro-health-check*
 

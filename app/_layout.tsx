@@ -14,6 +14,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { useEffect, type PropsWithChildren } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { PushProvider } from '@/features/push/components/PushProvider';
 import { configureAuth } from '@/shared/api';
 import { initQueryFocusManager } from '@/shared/api/queryFocusManager';
 import { tokenCache } from '@/shared/auth/tokenCache';
@@ -61,9 +62,11 @@ export default function RootLayout() {
     <ClerkProvider publishableKey={clerkPublishableKey} tokenCache={tokenCache}>
       <QueryClientProvider client={queryClient}>
         <AuthConfigurator>
-          <SafeAreaProvider>
-            <Stack screenOptions={{ headerShown: false }} />
-          </SafeAreaProvider>
+          <PushProvider>
+            <SafeAreaProvider>
+              <Stack screenOptions={{ headerShown: false }} />
+            </SafeAreaProvider>
+          </PushProvider>
         </AuthConfigurator>
       </QueryClientProvider>
     </ClerkProvider>
