@@ -115,6 +115,61 @@ SDK 56`. Pendiente tu build + smoke visual en ambos teléfonos antes de
   typecheck, `expo-doctor` 21/21, `expo config` confirmado resolviendo
   el fallback local. Pendiente: correr los `eas env:set`, relanzar el
   build de Android.
+- **Bloqueo del build de iOS: `com.cerquita.app` no disponible en
+  Apple** (namespace global, ya tomado por otra cuenta). Decisión: nuevo
+  identificador único para ambas plataformas, `sv.cerquita.app`
+  (fallbacks si también está tomado: `com.cerquitasv.app`,
+  `com.brlemus.cerquita`) — el nombre de la app (Cerquita) no cambia.
+  Esto **bloquea el Checkpoint C2** (necesita un bundle ID real para
+  buildear iOS) hasta resolverse. Plan de ejecución ordenado (mapeado
+  antes de tocar código):
+  1. **[Vos]** Verificar disponibilidad en Apple Developer →
+     Identifiers → "+" (sin gastar una build) antes de que yo cambie
+     nada.
+  2. **[Yo]** `app.config.js`: solo `ios.bundleIdentifier`/
+     `android.package` cambian — `slug`/`scheme`/`name` y el wiring de
+     `googleServicesFile` (env var + fallback) quedan igual, solo
+     cambia el _contenido_ de los archivos en esos mismos paths.
+  3. **[Vos]** Firebase: agregar 2 apps nuevas (Android + iOS) con el
+     ID nuevo **en el mismo proyecto** (Firebase no permite renombrar
+     el package/bundle ID de una app existente) → nuevos
+     `google-services.json`/`GoogleService-Info.plist` sobreescriben
+     los de la raíz → la MISMA APNs key (.p8) se re-sube en la config
+     de Cloud Messaging de la app iOS nueva (Key ID/Team ID son del
+     Team, no del App ID — no hace falta generarla de nuevo).
+  4. **[Vos]** Re-correr los mismos 2 `eas env:set` (mismos nombres,
+     mismos paths locales, apuntando ahora a los archivos nuevos).
+  5. **[Vos]** `eas build --profile development --platform ios` —
+     primera build real de iOS. `eas device:create` NO hace falta
+     repetirlo (el registro del dispositivo es a nivel Team, no por
+     bundle ID).
+  6. Android: nada que hacer — el build ya en cola sigue siendo válido
+     para el gate de push de hoy (ver convivencia abajo).
+
+  **App ID viejo, verificado**: en iOS, Apple rechazó `com.cerquita.app`
+  antes de que EAS llegara a registrar nada ahí — no hay credencial
+  confirmada que limpiar. En Android no hay constraint de namespace
+  global hasta publicar en Play Store (Fase 9) y el keystore de EAS no
+  está atado al nombre del package — sigue funcionando igual tras el
+  rename.
+
+  **Convivencia confirmada (no asumida)**: los builds de EAS son un
+  snapshot — `app.config.js` y los archivos de Firebase quedan
+  horneados en el binario nativo en el momento del prebuild, una sola
+  vez; el binario nunca vuelve a leer `app.config.js`, y los reloads de
+  Metro solo reemplazan el bundle JS, nunca el shell nativo compilado.
+  El build de Android ya en cola quedó horneado con el `app.config.js`
+  viejo (`com.cerquita.app` + su `google-services.json`) — el cambio de
+  código no lo toca. `Constants.expoConfig` servido por Metro a ese
+  cliente viejo va a reportar el package nuevo (mismatch real pero
+  inofensivo: grep confirmado, nada en el código lee
+  `Constants.expoConfig.android.package`/`.ios.bundleIdentifier` en
+  runtime, solo `extra.apiUrl`/`extra.clerkPublishableKey`; el handshake
+  de Metro con el dev client tampoco valida consistencia de nombre de
+  package). El gate de push de Android de hoy corre contra la entrada
+  vieja de Firebase (`com.cerquita.app`), que sigue existiendo intacta
+  — no se toca ni se borra. Caveat: no borrar esa entrada de Firebase
+  hasta cerrar ese gate.
 
 ## Context
 
