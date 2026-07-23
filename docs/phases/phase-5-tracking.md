@@ -195,6 +195,22 @@ SDK 56`. Pendiente tu build + smoke visual en ambos teléfonos antes de
   quedó viejo respecto al JSON, no por el cambio de código en sí).
   Ambos builds (Android + iOS) relanzados de cero, ya alineados
   (package/bundleId nuevo + JSON nuevo en los dos).
+- **Contingencia del C2 confirmada**: el build de iOS falló en `pod
+install` -- exactamente la clase de riesgo anotada al planear C2,
+  pero con el diagnóstico invertido respecto a la nota original (ver
+  "Push FCM iOS — activación" y Notas/backlog para el detalle
+  corregido). Error real: pod Swift `FirebaseCoreInternal` sin module
+  map para su dependencia `GoogleUtilities` -- causado por NO tener
+  `useFrameworks: "static"` seteado, no por tenerlo. Fix verificado
+  contra la documentación oficial de RNFirebase (no la nota
+  especulativa previa): `expo-build-properties` nuevo, config
+  `ios`-only (`useFrameworks: "static"` + `forceStaticLinking:
+['RNFBApp', 'RNFBMessaging']`). Radio de impacto confirmado: sin
+  bloque `android` en el plugin, cero efecto en Android -- el APK ya
+  instalado sigue válido, el próximo build de Android tampoco necesita
+  esto. Gate: suite completa (40/40, 206/206 tests), lint, typecheck,
+  `expo-doctor` 21/21, `expo config` confirmado resolviendo el plugin
+  sin bloque Android. Pendiente: relanzar el build de iOS.
 
 ## Context
 
@@ -693,17 +709,51 @@ flujo interactivo:
    no aceptó el Program License Agreement vigente, el build puede
    fallar ahí — se resuelve entrando una vez a developer.apple.com.
 
-**Riesgo de compatibilidad ya anotado en el plan maestro** (linking
-estático de iOS + RNFirebase, headers no modulares): aplica
-específicamente a proyectos con `ios.useFrameworks: "static"` en
-`app.config.js` — **este proyecto no lo tiene seteado** (default
-dinámico), así que probablemente no aplica. No se agrega
-`expo-build-properties` preventivamente (sin necesidad real todavía,
-regla de `CLAUDE.md`); si el build de iOS falla con errores de "non-modular
-include in framework module" o similares, ese es el momento de
-agregarlo con el workaround ya investigado
-(`CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES=YES` vía
-`post_install` hook), no antes.
+**Riesgo de compatibilidad ya anotado en el plan maestro — contingencia
+confirmada, corrección sobre lo anotado acá originalmente**: el primer
+build real de iOS falló en `pod install`, pero no con el síntoma que
+esta sección anticipaba ("non-modular include in framework module").
+Error real (verificado, no el supuesto):
+
+```
+[!] The following Swift pods cannot yet be integrated as static libraries:
+The Swift pod `FirebaseCoreInternal` depends upon `GoogleUtilities`, which
+does not define modules.
+```
+
+La lectura original de acá tenía el diagnóstico invertido: no era que
+`useFrameworks: "static"` fuera a CAUSAR un problema si se seteaba — era
+que **no tenerlo seteado** (el default de este proyecto) es lo que
+rompe, porque `firebase-ios-sdk` exige integración por frameworks para
+que CocoaPods genere module maps para los pods Swift (como
+`FirebaseCoreInternal`) que dependen de pods Objective-C (como
+`GoogleUtilities`). Verificado contra la documentación oficial actual de
+RNFirebase (rnfirebase.io), no contra la nota especulativa de esta
+sección. Fix aplicado — `expo-build-properties`, **solo bloque `ios`**:
+
+```js
+[
+  'expo-build-properties',
+  {
+    ios: {
+      useFrameworks: 'static',
+      forceStaticLinking: ['RNFBApp', 'RNFBMessaging'],
+    },
+  },
+],
+```
+
+`forceStaticLinking` (requisito adicional para RN 0.84+/Expo 54+, este
+proyecto en RN 0.85.3/SDK 56 cae ahí) lista cada módulo RNFB en uso —
+acá solo `RNFBApp`/`RNFBMessaging`, los dos únicos paquetes instalados.
+
+**Radio de impacto, respondido explícito**: el plugin no tiene bloque
+`android` — `expo-build-properties` aplica sus cambios por plataforma de
+forma aislada, así que esto no toca nada de Android, ni ahora ni en el
+próximo rebuild (el concepto `useFrameworks`/CocoaPods no existe del
+lado de Gradle). El APK ya instalado del gate de push sigue
+completamente válido — no se invalida por este cambio, y el próximo
+build de Android tampoco necesita nada de esto.
 
 ### Gate visual C2
 
@@ -910,12 +960,16 @@ C (Android) esté en verde.**
   de esta misma fase** — ver "Push FCM iOS — activación" arriba.
   Tracking en iOS siguió siendo 100% funcional vía polling mientras
   tanto (y sigue siéndolo como fallback si el permiso se niega).
-- **`expo-build-properties`**: sigue sin agregarse preventivamente (el
-  proyecto no usa `ios.useFrameworks: "static"`, así que el riesgo de
-  linking estático documentado en el plan maestro probablemente no
-  aplica). Ya no es "diferido a Fase 9" sino una contingencia del
-  Checkpoint C2: se agrega solo si el primer build de iOS falla con
-  errores de headers no modulares.
+- **`expo-build-properties`**: contingencia confirmada y agregada. El
+  primer build de iOS falló en `pod install` -- no por headers no
+  modulares como se especulaba, sino por lo contrario: **no tener**
+  `useFrameworks: "static"` seteado es lo que rompe (`firebase-ios-sdk`
+  exige integración por frameworks para que los pods Swift generen
+  module maps de sus deps Objective-C). Ver "Push FCM iOS —
+  activación" arriba para el error real, el fix aplicado
+  (`useFrameworks: "static"` + `forceStaticLinking`, verificado contra
+  la doc oficial de RNFirebase) y el radio de impacto (solo iOS, el
+  APK de Android instalado sigue válido).
 - **Fuera de esta fase**: historial de pedidos (Fase 6) — pero ya deja
   `useOrder`/`useOrderStatus` en `src/features/orders/` listos para
   reusar ahí.

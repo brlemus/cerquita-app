@@ -34,6 +34,20 @@ const config = {
           'Usamos tu ubicación para ubicar tu dirección de entrega y calcular el envío.',
       },
     ],
+    [
+      'expo-build-properties',
+      {
+        // Contingencia del Checkpoint C2 ya documentada (docs/phases/phase-5-tracking.md):
+        // firebase-ios-sdk exige use_frameworks -- sin esto, pods Swift
+        // como FirebaseCoreInternal no pueden generar module maps para
+        // sus deps de Objective-C (GoogleUtilities). Solo iOS --
+        // Android no tiene este concepto, no se toca.
+        ios: {
+          useFrameworks: 'static',
+          forceStaticLinking: ['RNFBApp', 'RNFBMessaging'],
+        },
+      },
+    ],
   ],
   experiments: {
     typedRoutes: true,
