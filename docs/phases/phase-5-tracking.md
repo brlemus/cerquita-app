@@ -211,6 +211,47 @@ install` -- exactamente la clase de riesgo anotada al planear C2,
   esto. Gate: suite completa (40/40, 206/206 tests), lint, typecheck,
   `expo-doctor` 21/21, `expo config` confirmado resolviendo el plugin
   sin bloque Android. Pendiente: relanzar el build de iOS.
+- **Bug del gate de push en Android** (dev token temporal usado para
+  probar como super-admin desde Swagger -- confirmó que la cancelación
+  de soporte + polling siguen funcionando, coherente con "no hay token,
+  el backend no tiene a quién enviarle"): la tarjeta de permiso nunca
+  apareció en la confirmación y `device_tokens` quedó vacía. Diagnóstico
+  leyendo el flujo completo (`PushProvider`/`NotificationPermissionCard`/
+  registro): el registro **no** está atado únicamente al tap de la
+  tarjeta -- `PushProvider` ya tenía una rama silenciosa independiente
+  (`if (status !== 'granted') return`, en cada transición de
+  `isSignedIn`), correcta y ajena al flag `prompted`. Causa más probable
+  (Expo SDK 56 compila contra un target SDK de Android bien arriba de
+  33, así que un `undetermined` genuino era lo esperable en el primer
+  lanzamiento real): el flag `push_permission_prompted` en AsyncStorage
+  quedó seteado de una sesión de testing anterior sobre el mismo
+  install -- con `prompted` verdadero, la tarjeta correctamente no se
+  muestra, y con `status` todavía `undetermined` (nunca concedido de
+  verdad), la rama silenciosa de `PushProvider` también correctamente
+  no hace nada. Ambos síntomas explicados por un solo estado stale, sin
+  necesitar un bug adicional.
+
+  **Gap real encontrado al trazar el flujo** (no explica necesariamente
+  este caso puntual, pero es una falla de diseño real): cero
+  visibilidad de errores en todo el pipeline de registro --
+  `getFcmToken()` tragaba cualquier excepción en silencio,
+  `PushProvider` tenía el IIFE async de su registro silencioso SIN
+  try/catch (una excepción ahí quedaba como unhandled rejection,
+  invisible), y ninguna de las dos llamadas a `registerDevice.mutate`
+  tenía `onError`. Fix: logging `__DEV__`-only en cada punto de
+  decisión (status del permiso, resultado de `getFcmToken`, éxito/error
+  de la mutación) en los tres lugares, más un `try/catch` real en el
+  bloque que no lo tenía. Se extrajo además `shouldShowPermissionCard(status,
+prompted)` (`src/features/push/utils/`, pura, testeada) -- codifica
+  la regla exacta de visibilidad de la tarjeta en vez de dejarla inline,
+  para que un futuro cambio ahí no pueda romperla en silencio.
+
+  Acción para vos antes del reintento: limpiar el storage de la app
+  (Settings → Apps → Cerquita → Almacenamiento → Borrar almacenamiento)
+  o reinstalar, para resetear el flag stale y volver a `undetermined`
+  real. Es JS -- sin rebuild, el mismo APK ya instalado sirve. Gate:
+  suite completa (41/41 -- 210/210 tests), lint, typecheck,
+  `expo-doctor` 21/21.
 
 ## Context
 

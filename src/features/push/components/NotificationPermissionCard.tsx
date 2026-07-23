@@ -6,6 +6,7 @@ import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { colors, radius, spacing, Text } from '@/shared/ui';
 import { getFcmToken } from '../getFcmToken';
 import { useRegisterDevice } from '../hooks/useRegisterDevice';
+import { shouldShowPermissionCard } from '../utils/shouldShowPermissionCard';
 
 const PROMPTED_FLAG_KEY = 'push_permission_prompted';
 
@@ -32,7 +33,10 @@ export function NotificationPermissionCard() {
         Notifications.getPermissionsAsync(),
         AsyncStorage.getItem(PROMPTED_FLAG_KEY),
       ]);
-      if (!cancelled && status === 'undetermined' && !prompted) {
+      if (__DEV__) {
+        console.log('[push] tarjeta de permiso -- status:', status, 'prompted:', prompted);
+      }
+      if (!cancelled && shouldShowPermissionCard(status, prompted)) {
         setVisible(true);
       }
     })();
@@ -49,12 +53,24 @@ export function NotificationPermissionCard() {
     setVisible(false);
     const { status } = await Notifications.requestPermissionsAsync();
     await markPrompted();
+    if (__DEV__) {
+      console.log('[push] tarjeta -- requestPermissionsAsync devolvió:', status);
+    }
     if (status !== 'granted') {
       return;
     }
     const token = await getFcmToken();
     if (token) {
-      registerDevice.mutate({ fcmToken: token, platform: 'android' });
+      registerDevice.mutate(
+        { fcmToken: token, platform: 'android' },
+        {
+          onError: (error) => {
+            if (__DEV__) {
+              console.log('[push] registerDevice (tarjeta) falló:', error);
+            }
+          },
+        },
+      );
     }
   }
 

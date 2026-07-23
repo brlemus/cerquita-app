@@ -9,7 +9,10 @@ import messaging from '@react-native-firebase/messaging';
 export async function getFcmToken(): Promise<string | null> {
   try {
     return await messaging().getToken();
-  } catch {
+  } catch (error) {
+    if (__DEV__) {
+      console.log('[push] getFcmToken falló:', error);
+    }
     return null;
   }
 }

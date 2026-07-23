@@ -27,13 +27,36 @@ export function PushProvider({ children }: PropsWithChildren) {
       return;
     }
     (async () => {
-      const { status } = await Notifications.getPermissionsAsync();
-      if (status !== 'granted') {
-        return;
-      }
-      const token = await getFcmToken();
-      if (token) {
-        registerDevice.mutate({ fcmToken: token, platform: 'android' });
+      try {
+        const { status } = await Notifications.getPermissionsAsync();
+        if (__DEV__) {
+          console.log('[push] registro silencioso -- permission status:', status);
+        }
+        if (status !== 'granted') {
+          return;
+        }
+        const token = await getFcmToken();
+        if (!token) {
+          return;
+        }
+        registerDevice.mutate(
+          { fcmToken: token, platform: 'android' },
+          {
+            onError: (error) => {
+              if (__DEV__) {
+                console.log('[push] registerDevice (silencioso) falló:', error);
+              }
+            },
+          },
+        );
+      } catch (error) {
+        // Este bloque no tenía try/catch -- cualquier excepción acá
+        // quedaba como unhandled rejection, invisible, sin romper la app
+        // pero también sin dejar rastro (bug real de diagnosticabilidad,
+        // ver docs/phases/phase-5-tracking.md).
+        if (__DEV__) {
+          console.log('[push] registro silencioso -- excepción:', error);
+        }
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- registerDevice (mutate) es estable por identidad de useMutation, no hace falta como dep
