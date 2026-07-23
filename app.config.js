@@ -34,9 +34,11 @@ const config = {
   ios: {
     usesAppleSignIn: true,
     bundleIdentifier: 'com.cerquita.app',
+    googleServicesFile: './GoogleService-Info.plist',
   },
   android: {
     package: 'com.cerquita.app',
+    googleServicesFile: './google-services.json',
   },
   extra: {
     apiUrl,

@@ -75,10 +75,24 @@ SDK 56`. Pendiente tu build + smoke visual en ambos teléfonos antes de
   `src/features/push/**` completo, `useLogout()` reemplazando las 4
   llamadas sueltas a `signOut()`, `index.js` con el background handler,
   `PushProvider` montado en `app/_layout.tsx`, `.gitignore` ya
-  actualizado. Sigue: vos hacés la checklist de Firebase Console +
-  Railway (abajo) → yo agrego `googleServicesFile` a `app.config.js` y
-  corro un último `expo-doctor` → tu segundo rebuild nativo → gate
-  visual de push.
+  actualizado.
+- **Bug real encontrado post-commit**: el propio hook de pre-commit
+  (`eslint --fix`, regla `import/first`) reordenó `index.js` e invirtió
+  el orden real entre `expo-router/entry` y el registro del background
+  handler -- exactamente el orden que ese archivo existe para
+  garantizar. Fix: `eslint-disable-next-line import/first` puntual,
+  verificado idempotente contra `--fix` (no se puede volver a reordenar
+  en un commit futuro), commit aparte.
+- **Checkpoint C — Firebase Console + Railway confirmados por vos**
+  (`google-services.json`/`GoogleService-Info.plist` en la raíz,
+  `FCM_PROJECT_ID`/`CLIENT_EMAIL`/`PRIVATE_KEY` en Railway, redeploy sin
+  errores de FCM). `googleServicesFile` agregado a `app.config.js` para
+  ambas plataformas. Gate final: `expo config --type public` resuelve
+  ambos paths reales, `expo-doctor` 21/21, suite completa (40/40 --
+  206/206 tests), lint, typecheck -- todos en verde con los archivos
+  reales ya presentes (no solo sin ellos como el checkpoint anterior).
+  Pendiente: tu segundo rebuild nativo (ahora con Firebase en el árbol)
+  y el gate visual de push.
 
 ## Context
 
