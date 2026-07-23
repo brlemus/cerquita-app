@@ -98,6 +98,23 @@ SDK 56`. Pendiente tu build + smoke visual en ambos teléfonos antes de
   FCM iOS — activación" y la entrada de Checkpoint C2 en
   `## Checkpoints`). Solo plan por ahora -- implementación arranca
   cuando el gate visual del Checkpoint C (Android) esté en verde.
+- **Build de Android falló en prebuild** (en cola de EAS): `eas build`
+  solo sube al builder los archivos trackeados por git —
+  `google-services.json` gitignorado nunca llegó, `googleServicesFile`
+  apuntaba a un path que no existía del lado del builder. Fix:
+  `app.config.js` resuelve `googleServicesFile` desde una env var
+  (`GOOGLE_SERVICES_JSON`/`GOOGLE_SERVICE_INFO_PLIST`) con fallback al
+  archivo local -- cableado para ambas plataformas de una vez, ya que
+  el Checkpoint C2 iba a pisar la misma piedra con
+  `GoogleService-Info.plist`. Comando real verificado contra el CLI
+  instalado: `eas env:create` existe pero está deprecado a favor de
+  `eas env:set` (ver sección `google-services.json`/
+  `GoogleService-Info.plist` arriba para los comandos exactos).
+  `--visibility sensitive`, no `secret` -- ninguno de los dos archivos
+  es un secreto real. Gate: suite 40/40 -- 206/206 tests, lint,
+  typecheck, `expo-doctor` 21/21, `expo config` confirmado resolviendo
+  el fallback local. Pendiente: correr los `eas env:set`, relanzar el
+  build de Android.
 
 ## Context
 
@@ -455,14 +472,39 @@ GoogleService-Info.plist
 ```
 
 Los ponés vos en la raíz del repo (local, gitignorado) antes de un build
-local. Para builds en la nube (`eas build`, que corrés vos) hace falta
-además subirlos como **EAS secret de tipo archivo** — comando que
-también es tuyo (toca credenciales):
+local.
+
+**Corrección real (el plan original acá estaba incompleto)**: para
+builds en la nube, `eas build` **solo sube al builder los archivos
+trackeados por git** — un `googleServicesFile` apuntando a un path
+estático gitignorado nunca llega, y el prebuild remoto falla. `app.config.js`
+resuelve `googleServicesFile` desde una env var (`GOOGLE_SERVICES_JSON`/
+`GOOGLE_SERVICE_INFO_PLIST`) con fallback al archivo local:
+
+```js
+const googleServicesJson = process.env.GOOGLE_SERVICES_JSON ?? './google-services.json';
+const googleServiceInfoPlist =
+  process.env.GOOGLE_SERVICE_INFO_PLIST ?? './GoogleService-Info.plist';
+```
+
+Los archivos se suben como **EAS environment variable de tipo `file`**,
+en el environment `development` (el que resuelve nuestro único perfil de
+build hoy) — comando tuyo, toca credenciales. Verificado contra el CLI
+real: `eas env:create` existe pero está **deprecado a favor de `eas
+env:set`** (ambos comandos aceptan los mismos flags; `set` es el
+vigente):
 
 ```
-eas secret:create --scope project --type file --name GOOGLE_SERVICES_JSON --value ./google-services.json
-eas secret:create --scope project --type file --name GOOGLE_SERVICES_INFO_PLIST --value ./GoogleService-Info.plist
+eas env:set development --scope project --name GOOGLE_SERVICES_JSON --type file --value ./google-services.json --visibility sensitive
+eas env:set development --scope project --name GOOGLE_SERVICE_INFO_PLIST --type file --value ./GoogleService-Info.plist --visibility sensitive
 ```
+
+`--visibility sensitive` (no `secret`): ninguno de los dos archivos es
+un secreto real (Google documenta que `google-services.json` es seguro
+de embeber en un cliente, extraíble de cualquier APK/IPA ya publicado)
+— pero tampoco tiene sentido dejarlos en `plaintext` en logs de build
+sin necesidad. Mismo criterio "credencial-adyacente" que ya motivó no
+versionarlos.
 
 `eas.json` (lo escribo yo, es solo config — sin credenciales):
 
@@ -806,4 +848,5 @@ C (Android) esté en verde.**
   primero, sin mezclar con nada de Firebase (`chore(sdk): upgrade to
 Expo SDK 56`), tal como pediste.
 - No se crean/leen archivos `.env*`. No corro `eas build`/`eas submit`/
-  `eas secret:create` (credenciales — son tuyos). No `git push`.
+  `eas env:set`/`eas device:create` (credenciales — son tuyos). No
+  `git push`.

@@ -1,5 +1,12 @@
 const apiUrl = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
 const clerkPublishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ?? '';
+// EAS Build solo sube al builder los archivos trackeados por git -- estos
+// dos están gitignorados a propósito (ver docs/phases/phase-5-tracking.md).
+// En la nube resuelven desde una env var de tipo file (el path que EAS
+// deja en el runner); en local caen al archivo de la raíz del repo.
+const googleServicesJson = process.env.GOOGLE_SERVICES_JSON ?? './google-services.json';
+const googleServiceInfoPlist =
+  process.env.GOOGLE_SERVICE_INFO_PLIST ?? './GoogleService-Info.plist';
 
 /** @type {import('expo/config').ExpoConfig} */
 const config = {
@@ -34,11 +41,11 @@ const config = {
   ios: {
     usesAppleSignIn: true,
     bundleIdentifier: 'com.cerquita.app',
-    googleServicesFile: './GoogleService-Info.plist',
+    googleServicesFile: googleServiceInfoPlist,
   },
   android: {
     package: 'com.cerquita.app',
-    googleServicesFile: './google-services.json',
+    googleServicesFile: googleServicesJson,
   },
   extra: {
     apiUrl,
