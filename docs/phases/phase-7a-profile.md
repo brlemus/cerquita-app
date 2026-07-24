@@ -334,5 +334,27 @@ src/features/marketplace src/features/orders --silent` → 20 suites/96
   - Gate: `pnpm exec jest src/features/profile src/features/push
 src/features/auth --silent` → 15 suites/77 tests OK. `pnpm exec tsc
 --noEmit` → limpio.
-- [ ] C3 — Privacy policy
+- [x] **C3 — Privacy policy.** Cerrado.
+  - `src/features/profile/data/privacyPolicy.ts` (nuevo): 5 secciones
+    (qué datos y por qué, con quién se comparten, retención tras borrado
+    de cuenta, tus derechos, contacto — `soporte.cerquita@outlook.com`,
+    única credencial/dato de contacto en el texto). Contenido revisado
+    contra prácticas reales de hoy, sin nada de Cloudinary/fotos ni
+    analytics.
+  - `PrivacyPolicyScreen.tsx` + ruta `app/(app)/privacy.tsx` (patrón
+    wrapper del repo, mismo header apilado que `AddressListScreen`).
+  - Fila "Privacidad" cableada entre "Notificaciones" y "Enviar
+    comentarios" (no está en el prototipo — orden propio, agrupa lo
+    relacionado a cuenta/seguridad antes de feedback).
+  - `PLAN_MOBILE_CERQUITA.md` — nuevo ítem 9 en el checklist de Fase 9
+    ("publicar la privacy policy en URL pública con este mismo texto —
+    tuyo"), renumerados los dos ítems siguientes.
+  - **Nota de implementación real**: `.expo/types/router.d.ts` (generado,
+    gitignored) no incluía `/privacy` hasta correr `expo start` una vez —
+    typed routes no se regenera solo con archivos en disco. Se corrió
+    `expo start` en background ~20s solo para regenerar el archivo local,
+    después killeado; no afecta el repo ni el commit.
+  - Gate: `pnpm exec jest src/features/profile --silent` → 2 suites/7
+    tests OK. `pnpm exec tsc --noEmit` → limpio (tras regenerar typed
+    routes).
 - [ ] C4 — Borrado de cuenta

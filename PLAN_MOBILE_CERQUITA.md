@@ -441,11 +441,16 @@ Paso a paso, marcando qué es tuyo vs de Claude Code:
 6. **`eas submit`** — **NO lo ejecuta Claude Code**, lo corrés vos.
 7. **Revisión de Apple/Google** — esperar resultado; si hay rechazo, Claude Code ayuda a diagnosticar y corregir contra el checklist de Store readiness (Fase 8).
 8. **Producción** — publicación final, **tuya**.
-9. **Migrar "Sign in with Apple" a flujo nativo** (`useSignInWithApple`) —
-   reemplaza el flujo OAuth web actual (`useSSO`, ver
-   `docs/phases/phase-1.5-social-login.md`); requiere el Team ID real de
-   Apple Developer en Clerk, disponible recién con la cuenta paga.
-10. **Cargar credenciales de producción de Apple y Google en Clerk** —
+9. **Publicar la privacy policy en una URL pública**, con el mismo texto de
+   `src/features/profile/data/privacyPolicy.ts` (Fase 7a) — requisito de App
+   Store Connect y Google Play Console. **Tuyo** (hosting/dominio); Claude
+   Code puede preparar el HTML/markdown a partir del mismo texto si hace
+   falta.
+10. **Migrar "Sign in with Apple" a flujo nativo** (`useSignInWithApple`) —
+    reemplaza el flujo OAuth web actual (`useSSO`, ver
+    `docs/phases/phase-1.5-social-login.md`); requiere el Team ID real de
+    Apple Developer en Clerk, disponible recién con la cuenta paga.
+11. **Cargar credenciales de producción de Apple y Google en Clerk** —
     Google: config en Google Cloud Console (ver
     `docs/phases/phase-1.5-social-login.md`); Apple: bloqueado hasta la
     cuenta de Apple Developer (mismo paso 1 de este checklist).

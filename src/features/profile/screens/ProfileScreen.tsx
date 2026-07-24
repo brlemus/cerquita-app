@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLogout } from '@/features/auth/hooks/useLogout';
 import { useCartStore } from '@/features/cart/store/cartStore';
 import { colors, PinIcon, radius, spacing, Text } from '@/shared/ui';
-import { ChatIcon, GearIcon } from '../components/icons';
+import { ChatIcon, GearIcon, ShieldIcon } from '../components/icons';
 import { SettingsRow } from '../components/SettingsRow';
 import { useNotificationPermission } from '../hooks/useNotificationPermission';
 
@@ -59,6 +59,11 @@ export function ProfileScreen() {
             label="Notificaciones"
             value={notificationPermission.isGranted ? 'Activadas' : 'Desactivadas'}
             onPress={notificationPermission.requestOrOpenSettings}
+          />
+          <SettingsRow
+            icon={<ShieldIcon />}
+            label="Privacidad"
+            onPress={() => router.push('/privacy')}
           />
           <SettingsRow
             icon={<ChatIcon />}
