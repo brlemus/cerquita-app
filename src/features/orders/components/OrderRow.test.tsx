@@ -36,4 +36,23 @@ describe('OrderRow', () => {
 
     expect(screen.getAllByText(/Pedido #/)).toHaveLength(1);
   });
+
+  it('muestra "Calificado" cuando el pedido tiene review', () => {
+    render(
+      <OrderRow
+        order={buildOrder({
+          review: { id: 'r1', rating: 5, createdAt: '2026-07-20T00:00:00.000Z' },
+        })}
+        onPress={jest.fn()}
+      />,
+    );
+
+    expect(screen.getByText('· Calificado')).toBeTruthy();
+  });
+
+  it('no muestra "Calificado" cuando el pedido no tiene review', () => {
+    render(<OrderRow order={buildOrder({ review: null })} onPress={jest.fn()} />);
+
+    expect(screen.queryByText('· Calificado')).toBeNull();
+  });
 });

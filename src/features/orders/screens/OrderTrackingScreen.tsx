@@ -151,7 +151,9 @@ export function OrderTrackingScreen() {
             </View>
           ) : null}
 
-          {effectiveStatus === 'ENTREGADO' ? <OrderReviewCard orderId={order.id} /> : null}
+          {effectiveStatus === 'ENTREGADO' ? (
+            <OrderReviewCard orderId={order.id} review={order.review} />
+          ) : null}
         </ScrollView>
 
         <View style={[styles.footer, { paddingBottom: bottomInset }]}>

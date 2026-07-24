@@ -47,9 +47,16 @@ export const OrderRow = memo(function OrderRow({ order, onPress }: OrderRowProps
           </Text>
         ) : null}
         <View style={styles.bottomRow}>
-          <Text variant="footnote" color="secondary">
-            {formatOrderDate(order.createdAt)}
-          </Text>
+          <View style={styles.bottomRowLeft}>
+            <Text variant="footnote" color="secondary">
+              {formatOrderDate(order.createdAt)}
+            </Text>
+            {order.review ? (
+              <Text variant="footnote" color="secondary">
+                · Calificado
+              </Text>
+            ) : null}
+          </View>
           <Text variant="bodySm">{formatMoneyCents(order.totalCents)}</Text>
         </View>
       </View>
@@ -88,5 +95,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  bottomRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
 });

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import type { OrderReviewSummary } from '@/features/reviews/api/types';
 import { ApiRequestError } from '@/shared/api';
 import { Button, colors, radius, spacing, Text, TextField } from '@/shared/ui';
 import { useCreateReview } from '../hooks/useCreateReview';
@@ -11,24 +12,35 @@ import { StarRatingInput } from './StarRatingInput';
 
 export type OrderReviewCardProps = {
   orderId: string;
+  /** `Order.review` -- fuente de verdad del backend. `null`/`undefined` = no calificado (o no llegó todavía). */
+  review: OrderReviewSummary | null | undefined;
 };
 
 /**
  * Vive dentro del `ScrollView` de `OrderTrackingScreen`, solo cuando
- * `ENTREGADO`. "Ya reseñado" lee `reviewedOrdersStore` -- no hay endpoint de
- * listado para el customer (docs/API_CONTRACT.md, sección 6).
+ * `ENTREGADO`. "Ya reseñado" combina la fuente de verdad del backend
+ * (`review`) con `reviewedOrdersStore` como cache optimista -- cubre el
+ * instante entre "el customer califica" y el próximo refetch del pedido,
+ * que todavía no trae el `review` real.
  */
-export function OrderReviewCard({ orderId }: OrderReviewCardProps) {
-  const reviewed = useReviewedOrdersStore((state) => isOrderReviewed(state, orderId));
+export function OrderReviewCard({ orderId, review }: OrderReviewCardProps) {
+  const locallyReviewed = useReviewedOrdersStore((state) => isOrderReviewed(state, orderId));
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [submittedRating, setSubmittedRating] = useState<number | null>(null);
   const createReview = useCreateReview(orderId);
+
+  const reviewed = review != null || locallyReviewed;
+  // Preferí el rating real del servidor; mientras no llegue (recién
+  // calificado, todavía sin refetch), el que el usuario acaba de enviar.
+  const displayedRating = review?.rating ?? submittedRating;
 
   if (reviewed) {
     return (
       <View style={styles.card}>
         <Text variant="bodyLg">¡Gracias por tu reseña!</Text>
+        {displayedRating ? <StarRatingInput value={displayedRating} readOnly /> : null}
         <Text variant="bodySm" color="secondary">
           Tu opinión ayuda a otros clientes a elegir este negocio.
         </Text>
@@ -43,6 +55,7 @@ export function OrderReviewCard({ orderId }: OrderReviewCardProps) {
       setError(result.error.issues[0]?.message ?? 'Revisá tu reseña.');
       return;
     }
+    setSubmittedRating(result.data.rating);
     createReview.mutate(result.data, {
       onError: (err) => {
         if (err instanceof ApiRequestError && err.error.kind === 'conflict') {

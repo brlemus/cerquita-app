@@ -282,5 +282,31 @@ el **merge** es siempre tuyo.
   - Gate: `pnpm exec jest src/shared/api src/features/checkout
 src/features/orders/utils src/features/reviews --silent` → 13
     suites/104 tests OK. `pnpm exec tsc --noEmit` → limpio.
-- [ ] CP2 — Review como fuente de verdad (Parte 2)
+- [x] **CP2 — Review como fuente de verdad (Parte 2).** Cerrado.
+  - `OrderReviewSummary` en `reviews/api/types.ts`; `Order` (orders/api/types.ts)
+    gana `logoUrl?` y `review?: OrderReviewSummary | null` (import de tipo
+    desde `reviews`, mismo sentido que ya existe a nivel de pantalla).
+  - `StarRatingInput` gana modo `readOnly` (mismo ícono, sin `Pressable`,
+    un solo `accessibilityLabel` de resumen) — sin componente nuevo.
+  - `OrderReviewCard` ahora recibe `review` por prop; `reviewed = review
+!= null || locallyReviewed` combina la fuente de verdad del backend
+    con el store como cache optimista. Estado "gracias" muestra las
+    estrellas reales (`review.rating`) o el rating recién enviado
+    (`submittedRating`) mientras no llega el refetch — antes era texto
+    fijo sin el dato.
+  - `OrderTrackingScreen` pasa `review={order.review}`.
+  - `useCreateReview` invalida `['orders','detail',orderId]` y
+    `['orders','list']` en éxito (keys literales, sin acoplar `reviews` a
+    los hooks de `orders`) — el `review` real reemplaza el eco optimista.
+  - `OrderRow` muestra "· Calificado" cuando `order.review != null`
+    (interpretación de "la lista puede marcar sin costo extra").
+  - Limpieza: docblock de `reviewedOrdersStore.ts` actualizado (ya no dice
+    "fuente de verdad", dice "cache optimista"); entrada de backlog en
+    `PLAN_MOBILE_CERQUITA.md` sobre este gap, borrada (ya cerrado).
+  - Tests nuevos: `OrderReviewCard.test.tsx` (no existía — formulario sin
+    reseña, "gracias" con estrellas reales del backend, "gracias" vía
+    marca local optimista). `OrderRow.test.tsx` +2 casos. `useCreateReview.test.tsx`
+    +1 caso de invalidación.
+  - Gate: `pnpm exec jest src/features/reviews src/features/orders
+--silent` → 11 suites/61 tests OK. `pnpm exec tsc --noEmit` → limpio.
 - [ ] Cierre: gate completo + PR

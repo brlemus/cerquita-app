@@ -21,7 +21,7 @@ function createClientAndWrapper() {
   function Wrapper({ children }: { children: ReactNode }) {
     return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
   }
-  return { Wrapper };
+  return { queryClient, Wrapper };
 }
 
 describe('useCreateReview', () => {
@@ -38,6 +38,19 @@ describe('useCreateReview', () => {
     await act(() => result.current.mutateAsync({ rating: 5 }));
 
     expect(useReviewedOrdersStore.getState().reviewedIds).toEqual(['order-1']);
+    unmount();
+  });
+
+  it('en éxito invalida el detalle y la lista de pedidos', async () => {
+    const { queryClient, Wrapper } = createClientAndWrapper();
+    const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+    mockCreateReview.mockResolvedValueOnce({ id: 'r1', orderId: 'order-1' });
+
+    const { result, unmount } = renderHook(() => useCreateReview('order-1'), { wrapper: Wrapper });
+    await act(() => result.current.mutateAsync({ rating: 5 }));
+
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['orders', 'detail', 'order-1'] });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['orders', 'list'] });
     unmount();
   });
 
