@@ -5,6 +5,12 @@ limitado a lo que consume la **app customer**. El backend ya está fijado:
 esta app se adapta a él, nunca al revés. Owner/admin queda fuera —
 ver `CLAUDE.md`.
 
+Actualizado el 2026-07-24 contra `cerquita-api` PR #16
+(`chore/order-review-state-409-reasons`, merge `6e6a656`): `details.reason`
+tipado en los 409 de pedidos/reseñas, `review` embebido en `GET /orders`/
+`GET /orders/:id`, y la deuda de `businessName`/`logoUrl`/
+`catalogCategoryName` del PR #15 anterior, nunca documentada hasta ahora.
+
 Fuente: código de `cerquita-api/src/**`, `schema-cerquita.dbml`,
 `PLAN_BACKEND_CERQUITA.md`. Los tipos de este documento deben espejarse
 1:1 en `src/shared/api/types.ts` de la app mobile.
@@ -65,6 +71,25 @@ solo colapsa a 500 lo verdaderamente no manejado):
 | 409    | A (`CONFLICT`)                              | re-registro rechazado, transición de pedido inválida/concurrente, review duplicada, `minOrder` no alcanzado                         |
 | 429    | B                                           | rate limit excedido                                                                                                                 |
 | 500    | genérico                                    | bug no manejado                                                                                                                     |
+
+**`details.reason` — discriminador estable de los 409 de pedidos y reseñas**
+(desde el 24-jul-2026, `cerquita-api` PR #16). Preferirlo sobre `message`
+(interpolado, y no siempre en inglés — ver §6) o sobre la forma/presencia de
+`details`, que ya no es un criterio confiable (ver §4). No aplica al 409 de
+re-registro de `/auth/me` (sección Auth, fuera de este catálogo).
+
+```ts
+type OrderConflictReason =
+  | 'BUSINESS_NOT_ACCEPTING_ORDERS'
+  | 'BELOW_MINIMUM_ORDER'
+  | 'PRODUCT_NOT_ACTIVE'
+  | 'VARIANT_OPTION_NOT_ACTIVE'
+  | 'INSUFFICIENT_STOCK'
+  | 'INVALID_STATUS_TRANSITION'
+  | 'STATUS_CHANGED_CONCURRENTLY'
+  | 'ORDER_NOT_DELIVERED'
+  | 'REVIEW_ALREADY_EXISTS';
+```
 
 Reglas de UI obligatorias (`CLAUDE.md`):
 
@@ -223,6 +248,7 @@ el cliente).
   id: string;
   businessId: string;
   catalogCategoryId: string | null;
+  catalogCategoryName: string | null; // null si catalogCategoryId es null
   name: string;
   description: string | null;
   photoUrl: string | null;
@@ -324,6 +350,9 @@ tocar stock de nuevo.
   etaMinutes?: number;
   paymentMethod: 'CASH';
   createdAt: string;
+  businessName: string;
+  logoUrl: string | null;
+  review: null;   // siempre null al crear — recién existe tras POST .../reviews
 }
 ```
 
@@ -332,31 +361,50 @@ tocar stock de nuevo.
 - `400` — falta `Idempotency-Key`; body inválido; producto no activo.
 - `404` — negocio, dirección, producto o variante no encontrados (o no
   pertenecen a ese negocio/customer).
-- `409` — las tres causas comparten `code: "CONFLICT"` (no hay un código
-  propio por causa) y se distinguen por `message`/`details` — confirmado
-  leyendo `create-order.handler.ts` y `stock-adjuster.ts` en
-  `cerquita-api` (2026-07-22):
-  - Negocio no `ACTIVE` o `isOpen:false`: `message: "Business is not
-accepting orders right now"`, `details: {businessId, status, isOpen}`.
-  - Subtotal por debajo de `minOrderCents`: `message: "Order subtotal (X)
-is below the business minimum (Y)"` (X/Y en centavos), **sin**
-    `details`.
-  - Stock insuficiente en una línea — verificado con un `UPDATE`
-    atómico condicional (`WHERE stock >= quantity`) dentro de la misma
-    transacción, no un read-then-write: `message: "Insufficient stock"`,
-    `details: {variantOptionId, quantity}` si la línea tiene variante, o
-    `{productId, quantity}` si no la tiene. `quantity` es la cantidad
-    **solicitada** en esa línea, no el stock disponible real (el error no
-    lo informa) — el cliente puede identificar la línea exacta por
-    `variantOptionId`/`productId`, pero no puede mostrar "quedan N" sin un
-    fetch aparte.
+- `409` — todas comparten `code: "CONFLICT"` (no hay un código HTTP propio
+  por causa); discriminar por `details.reason` — confirmado leyendo
+  `create-order.handler.ts`, `order.prisma-repository.ts` y
+  `stock-adjuster.ts` en `cerquita-api` (2026-07-24):
+
+  | `reason`                        | `message`                                                           | `details` (además de `reason`)                                         |
+  | ------------------------------- | ------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+  | `BUSINESS_NOT_ACCEPTING_ORDERS` | `"Business is not accepting orders right now"`                      | `{businessId, status, isOpen}`                                         |
+  | `BELOW_MINIMUM_ORDER`           | `"Order subtotal (X) is below the business minimum (Y)"` (centavos) | `{subtotalCents, minOrderCents}`                                       |
+  | `PRODUCT_NOT_ACTIVE`            | `"Product <id> is not active"`                                      | `{productId}`                                                          |
+  | `VARIANT_OPTION_NOT_ACTIVE`     | `"Variant option <id> is not active"`                               | `{variantOptionId}`                                                    |
+  | `INSUFFICIENT_STOCK`            | `"Insufficient stock"`                                              | `{variantOptionId, quantity}` o `{productId, quantity}` según la línea |
+
+  **Migración**: `BELOW_MINIMUM_ORDER` ya viene con `details` — el
+  contrato anterior decía "sin `details`" para este caso; cualquier
+  clasificación del cliente por ausencia de `details` deja de funcionar.
+
+  Stock insuficiente se verifica con un `UPDATE` atómico condicional
+  (`WHERE stock >= quantity`) dentro de la misma transacción, no un
+  read-then-write. `quantity` en `details` es la cantidad **solicitada**
+  en esa línea, no el stock disponible real (el error no lo informa) — el
+  cliente puede identificar la línea exacta por `variantOptionId`/
+  `productId`, pero no puede mostrar "quedan N" sin un fetch aparte.
 
 ### `POST /orders/:id/cancel`
 
 Sin body. Solo `PENDIENTE → CANCELADO`, actor `CUSTOMER`. Repone stock.
 **Response**: `OrderResponseDto` actualizado.
-**Errores**: `404` (no existe o ajeno), `409` (ya no está `PENDIENTE` —
-incluye el caso de conflicto por concurrencia: alguien más ya lo cambió).
+
+**Errores**: `404` (no existe o ajeno).
+
+- `409` `reason: 'INVALID_STATUS_TRANSITION'` — el pedido ya está en un
+  estado terminal (`ENTREGADO`/`CANCELADO`, sin arista de salida).
+  `message: "Cannot transition order from X to Y"`, `details: {reason,
+from, to}`.
+- `409` `reason: 'STATUS_CHANGED_CONCURRENTLY'` — alguien más cambió el
+  estado justo antes (carrera, UPDATE condicional sin filas afectadas).
+  `message: "Order status changed concurrently"`, `details: {reason,
+orderId, from, to}`.
+- **`403`, no `409`** — si el pedido está `PREPARANDO` o `EN_CAMINO`, la
+  transición `→ CANCELADO` existe en la máquina de estados pero el
+  customer no es un actor habilitado para dispararla ahí (solo
+  `BUSINESS`/`SUPPORT`); ese caso es un `ForbiddenError`, no un
+  `ConflictError` — no lo busques en la tabla de `reason`.
 
 ### `GET /orders` — historial
 
@@ -367,7 +415,26 @@ Query `{cursor?, limit?}`. Response paginada de `OrderResponseDto`.
 Response: `OrderResponseDto` (sin `statusHistory` — ese campo es exclusivo
 del endpoint de negocio/owner). `404` si no existe o es ajeno.
 
+`OrderResponseDto` en estos dos endpoints (list y detalle) trae, además del
+shape de `POST /orders` de arriba:
+
+```ts
+businessName: string;
+logoUrl: string | null;
+review: { id: string; rating: number; comment?: string; createdAt: string } | null;
+```
+
+`review !== null` es la **fuente de verdad** de "este pedido ya fue
+calificado" — reemplaza cualquier store local que el cliente mantuviera
+para lo mismo; ese store, si sigue existiendo, pasa a ser solo cache
+optimista del instante entre calificar y el próximo refetch.
+
 ### `GET /orders/:id/status` — polling
+
+Este endpoint **no** gana `review` ni `businessName`/`logoUrl` — comparte
+query/handler con el detalle pero serializa con otro DTO
+(`OrderStatusResponseDto`), deliberadamente sin tocar (protege el shape
+mínimo que consume el polling). Shape sin cambios, ver abajo.
 
 **Rate limit propio: 30/min** (más estricto que el global 100/min —
 respetarlo desde el cliente, no solo confiar en el 429).
@@ -441,8 +508,14 @@ viene en `avgRating`/`reviewCount` del marketplace (sección 3).
 **Reglas**: el pedido debe estar en `ENTREGADO` y pertenecer al customer;
 una review por pedido (constraint de unicidad).
 
-**Errores**: `404` (pedido inexistente/ajeno), `409` (pedido no
-`ENTREGADO`, o ya tiene review), `400` (rating fuera de 1-5).
+**Errores**: `404` (pedido inexistente/ajeno), `400` (rating fuera de 1-5).
+
+- `409` `reason: 'ORDER_NOT_DELIVERED'` — `message: "Order must be
+ENTREGADO to be reviewed"`, `details: {reason, orderId, status}`.
+- `409` `reason: 'REVIEW_ALREADY_EXISTS'` — `message: "Ya existe una
+reseña para este pedido"` (**en español**, a diferencia de todos los
+  demás `message` de este catálogo — no asumir inglés al mostrar/loguear),
+  `details: {reason, orderId}`.
 
 ---
 
