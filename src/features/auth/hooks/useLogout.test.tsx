@@ -90,4 +90,37 @@ describe('useLogout', () => {
     jest.useRealTimers();
     expect(unhandledRejections).toEqual([]);
   });
+
+  it('un signOut() que rechaza no produce un unhandled rejection (segunda instancia, backlog Fase 5)', async () => {
+    const unhandledRejections: unknown[] = [];
+    const onUnhandledRejection = (reason: unknown) => unhandledRejections.push(reason);
+    process.on('unhandledRejection', onUnhandledRejection);
+
+    mockGetFcmToken.mockResolvedValue(null);
+    mockSignOut.mockRejectedValueOnce(new Error('You are signed out'));
+    const { Wrapper } = createClientAndWrapper();
+
+    const { result } = renderHook(() => useLogout(), { wrapper: Wrapper });
+    await act(() => result.current());
+    // deja correr microtasks para que un rechazo huérfano, si lo hubiera, se procese
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    process.off('unhandledRejection', onUnhandledRejection);
+    expect(unhandledRejections).toEqual([]);
+  });
+
+  it('dos invocaciones concurrentes solo ejecutan signOut() una vez (guard de concurrencia)', async () => {
+    mockGetFcmToken.mockResolvedValue(null);
+    const { Wrapper } = createClientAndWrapper();
+
+    const { result } = renderHook(() => useLogout(), { wrapper: Wrapper });
+    await act(async () => {
+      await Promise.all([result.current(), result.current()]);
+    });
+
+    expect(mockSignOut).toHaveBeenCalledTimes(1);
+  });
 });

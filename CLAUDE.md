@@ -45,6 +45,10 @@ El usuario es backend senior pero NO es experto en FE/mobile. Eso significa:
 ## Flujo de trabajo
 
 - **Plan mode SIEMPRE** antes de codear. Mostrá el plan y esperá aprobación.
+- Toda unidad de trabajo — fase o chore, sin importar tamaño — produce su
+  plan file en `docs/phases/` ANTES de implementar, se actualiza con el
+  progreso en cada checkpoint, y se commitea con el trabajo. Un plan
+  mostrado en pantalla no sustituye al archivo.
 - **Una fase = un PR.** No mezcles fases. Gates verdes antes de cerrar.
 - **Conventional commits** (SemVer). Ej: `feat(cart): add variant selector`.
 - Planeá en **Opus**, implementá en **Sonnet**.
