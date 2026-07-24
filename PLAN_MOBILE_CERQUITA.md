@@ -181,7 +181,8 @@ de plan file por unidad de trabajo (nacida en el PR #10,
 | **5 — Tracking + Push**               | Polling de `GET /orders/:id/status` respetando `ETag`/`If-None-Match`/304 y el límite de 30/min; registro/baja de device token en login/logout (`POST`/`DELETE /devices`). **Requiere development build desde esta fase** (ver riesgo técnico abajo)                                                                                                                          |
 | **6a — Tab bar + Mis pedidos**        | Partición de la Fase 6 original (ver `docs/phases/phase-6-orders-tabs.md`): tab bar definitiva (Inicio/Pedidos/Perfil, con Perfil como stub mínimo — nombre/email de Clerk + cerrar sesión, el resto es Fase 7) y pantalla "Mis pedidos" (`GET /orders`, infinite scroll, pull-to-refresh, badge de estado) navegando al tracking de la Fase 5                                |
 | **6b — Reviews + Feedback**           | Review post-`ENTREGADO` (una por pedido), formulario de feedback general — PR aparte de la 6a, todavía sin planificar en detalle                                                                                                                                                                                                                                              |
-| **7 — Perfil + Borrado de cuenta**    | Pantalla de perfil completa (reemplaza el stub de la 6a): borrado de cuenta vía Clerk (ver Store readiness), privacy policy accesible, recuperación de contraseña, y las filas de paridad del prototipo (Mis direcciones, Notificaciones, Formas de pago diferida) — ver "Fase 7 — Perfil real (detalle)" abajo                                                               |
+| **7a — Perfil real**                  | **Construida** (`docs/phases/phase-7a-profile.md`). Pantalla de perfil completa (reemplaza el stub de la 6a): filas Mis direcciones/Notificaciones/Privacidad, privacy policy accesible, borrado de cuenta vía Clerk (ver Store readiness). "Formas de pago" queda diferida (recorte documentado)                                                                             |
+| **7b — Recuperación de contraseña**   | Flujo Clerk de reset por código + restaurar el link "¿Olvidaste tu contraseña?" del login — pendiente, se planifica cuando 7a esté mergeada. Ver "Fase 7 — Perfil real (detalle)" abajo                                                                                                                                                                                       |
 | **8 — Hardening + Store readiness**   | Checklist final de MASVS, accesibilidad (safe areas, touch targets, contraste), pantallas de permisos con contexto, ATT documentado como no-aplica, auditoría de logs sensibles, persistencia del Idempotency-Key en curso (límite aceptado en Fase 4, ver `docs/phases/phase-4-checkout.md`)                                                                                 |
 | **9 — Publicación**                   | Ver checklist al final de este documento                                                                                                                                                                                                                                                                                                                                      |
 
@@ -441,11 +442,16 @@ Paso a paso, marcando qué es tuyo vs de Claude Code:
 6. **`eas submit`** — **NO lo ejecuta Claude Code**, lo corrés vos.
 7. **Revisión de Apple/Google** — esperar resultado; si hay rechazo, Claude Code ayuda a diagnosticar y corregir contra el checklist de Store readiness (Fase 8).
 8. **Producción** — publicación final, **tuya**.
-9. **Migrar "Sign in with Apple" a flujo nativo** (`useSignInWithApple`) —
-   reemplaza el flujo OAuth web actual (`useSSO`, ver
-   `docs/phases/phase-1.5-social-login.md`); requiere el Team ID real de
-   Apple Developer en Clerk, disponible recién con la cuenta paga.
-10. **Cargar credenciales de producción de Apple y Google en Clerk** —
+9. **Publicar la privacy policy en una URL pública**, con el mismo texto de
+   `src/features/profile/data/privacyPolicy.ts` (Fase 7a) — requisito de App
+   Store Connect y Google Play Console. **Tuyo** (hosting/dominio); Claude
+   Code puede preparar el HTML/markdown a partir del mismo texto si hace
+   falta.
+10. **Migrar "Sign in with Apple" a flujo nativo** (`useSignInWithApple`) —
+    reemplaza el flujo OAuth web actual (`useSSO`, ver
+    `docs/phases/phase-1.5-social-login.md`); requiere el Team ID real de
+    Apple Developer en Clerk, disponible recién con la cuenta paga.
+11. **Cargar credenciales de producción de Apple y Google en Clerk** —
     Google: config en Google Cloud Console (ver
     `docs/phases/phase-1.5-social-login.md`); Apple: bloqueado hasta la
     cuenta de Apple Developer (mismo paso 1 de este checklist).

@@ -1,6 +1,6 @@
 import Svg, { Circle, Path } from 'react-native-svg';
 
-import { colors } from '@/shared/ui';
+import { colors } from './theme';
 
 export function PinIcon({ color = colors.brand.default }: { color?: string }) {
   return (

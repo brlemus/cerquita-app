@@ -8,6 +8,7 @@ export type ReviewedOrdersState = {
 
 type ReviewedOrdersActions = {
   markReviewed: (orderId: string) => void;
+  clearReviewed: () => void;
 };
 
 /**
@@ -28,6 +29,9 @@ export const useReviewedOrdersStore = create<ReviewedOrdersState & ReviewedOrder
             ? state
             : { reviewedIds: [...state.reviewedIds, orderId] },
         ),
+      // Borrado de cuenta (Fase 7a): es dato del usuario que se va, no debe
+      // sobrevivir para el próximo login -- mismo criterio que clearCart().
+      clearReviewed: () => set({ reviewedIds: [] }),
     }),
     {
       name: '@cerquita/reviewed-orders',

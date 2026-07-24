@@ -9,10 +9,9 @@ import { Platform } from 'react-native';
 import { getDevicePlatform } from '../getDevicePlatform';
 import { getFcmToken } from '../getFcmToken';
 import { useRegisterDevice } from '../hooks/useRegisterDevice';
+import { PERMISSION_REQUEST_ATTEMPTED_KEY } from '../permissionRequestKey';
 import { parseNotificationData } from '../utils/parseNotificationData';
 import { shouldRequestPermission } from '../utils/shouldRequestPermission';
-
-const PERMISSION_REQUEST_ATTEMPTED_KEY = 'push_permission_requested';
 
 /**
  * Listeners y orquestación de push, montado en `app/_layout.tsx` dentro

@@ -52,8 +52,10 @@ El usuario es backend senior pero NO es experto en FE/mobile. Eso significa:
 - **Una fase = un PR.** No mezcles fases. Gates verdes antes de cerrar.
 - **Conventional commits** (SemVer). Ej: `feat(cart): add variant selector`.
 - Planeá en **Opus**, implementá en **Sonnet**.
-- Permisos estrictos: NO `git push`, NO leer `.env*`, NO tocar credenciales,
-  NO `eas build`/`eas submit` (builds y publicación son del usuario).
+- Permisos estrictos: NO leer `.env*`, NO tocar credenciales, NO `eas
+build`/`eas submit` (builds y publicación son del usuario). Rama, push y
+  PR por unidad de trabajo sí los hacés vos (ver "Git: decisiones del
+  usuario" — el merge sigue siendo exclusivamente del usuario).
 
 ## Eficiencia de ejecución (crítico)
 
@@ -172,10 +174,16 @@ El código NUNCA se escribe antes de aprobar el plan en archivo. Orden estricto:
 
 ## Git: decisiones del usuario
 
-- NUNCA decidas por tu cuenta sobre ramas, merges, rebases o desde dónde
-  ramificar.
+- Podés crear ramas, hacer `git push` y abrir PRs por tu cuenta — una rama
+  y un PR por unidad de trabajo (fase o chore), como siempre. Vigente desde
+  la Fase 7a (2026-07-24).
+- El **merge** es exclusivamente del usuario, siempre y sin excepción —
+  esto no cambia bajo ninguna circunstancia. Nunca lo hagas vos, ni aunque
+  parezca implícito en el pedido.
+- NUNCA decidas por tu cuenta rebases, ni desde dónde ramificar si hay
+  ambigüedad (ej. `main` desalineado con el remoto, o una fase previa sin
+  mergear) — PARÁ y preguntá antes de crear la rama.
 - Si el estado de git no es el esperado, PARÁ y preguntá antes de continuar.
-- Vos no hacés push ni merge. Eso es siempre del usuario.
 - Los commits van SIN trailer de co-autoría ni atribución a Claude
   (Co-Authored-By, Generated with, etc.) — el autor es siempre el usuario.
   Tampoco en los cuerpos de PR.

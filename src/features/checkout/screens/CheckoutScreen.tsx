@@ -9,9 +9,17 @@ import { subtotalCents, useCartStore } from '@/features/cart/store/cartStore';
 import { BackIcon } from '@/features/marketplace/components/icons';
 import { useBusiness } from '@/features/marketplace/hooks/useBusiness';
 import { useBottomInset } from '@/shared/hooks';
-import { Button, colors, EmptyState, radius, spacing, Text } from '@/shared/ui';
+import {
+  Button,
+  ChevronRightIcon,
+  colors,
+  EmptyState,
+  PinIcon,
+  radius,
+  spacing,
+  Text,
+} from '@/shared/ui';
 import { formatMoneyCents } from '@/shared/utils';
-import { ChevronRightIcon, PinIcon } from '../components/icons';
 import { useAddresses } from '../hooks/useAddresses';
 import { useCreateOrder } from '../hooks/useCreateOrder';
 import type { CreateOrderPayload } from '../api/types';

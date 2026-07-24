@@ -5,9 +5,8 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'reac
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CartIconButton } from '@/features/cart/components/CartIconButton';
-import { PinIcon } from '@/features/checkout/components/icons';
 import { useAddresses } from '@/features/checkout/hooks/useAddresses';
-import { colors, EmptyState, ErrorState, radius, spacing, Text } from '@/shared/ui';
+import { colors, EmptyState, ErrorState, PinIcon, radius, spacing, Text } from '@/shared/ui';
 import type { Business } from '../api/types';
 import { BusinessCard } from '../components/BusinessCard';
 import { BusinessCardSkeleton } from '../components/BusinessCardSkeleton';
