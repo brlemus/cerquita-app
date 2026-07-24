@@ -1,4 +1,5 @@
 import { useUser } from '@clerk/clerk-expo';
+import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -7,6 +8,7 @@ import { useCartStore } from '@/features/cart/store/cartStore';
 import { colors, radius, spacing, Text } from '@/shared/ui';
 
 export function ProfileScreen() {
+  const router = useRouter();
   const { user } = useUser();
   const logout = useLogout();
 
@@ -39,6 +41,14 @@ export function ProfileScreen() {
             {email}
           </Text>
         ) : null}
+        <Pressable
+          onPress={() => router.push('/feedback')}
+          style={styles.actionRow}
+          accessibilityRole="button"
+          accessibilityLabel="Enviar comentarios"
+        >
+          <Text variant="bodyMd">Enviar comentarios</Text>
+        </Pressable>
         <Pressable
           onPress={handleLogout}
           style={styles.logoutButton}
@@ -80,8 +90,15 @@ const styles = StyleSheet.create({
   centerText: {
     textAlign: 'center',
   },
-  logoutButton: {
+  actionRow: {
     marginTop: spacing.xxl,
+    minHeight: 44,
+    paddingHorizontal: spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoutButton: {
+    marginTop: spacing.md,
     minHeight: 44,
     paddingHorizontal: spacing.lg,
     alignItems: 'center',
