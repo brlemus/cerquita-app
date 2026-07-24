@@ -305,6 +305,34 @@ del usuario, siempre y sin excepción.
   - Gate: `pnpm exec jest src/features/profile src/features/checkout
 src/features/marketplace src/features/orders --silent` → 20 suites/96
     tests OK. `pnpm exec tsc --noEmit` → limpio.
-- [ ] C2 — Fila Notificaciones
+- [x] **C2 — Fila Notificaciones.** Cerrado.
+  - `useNotificationPermission.ts` (nuevo): re-lee `getPermissionsAsync()` en
+    cada foco (`useFocusEffect`); detecta la transición real a `granted`
+    (con un ref que distingue "primera lectura, ya estaba concedido" de
+    "recién se concedió") y ahí sí registra el device (`getFcmToken` +
+    `useRegisterDevice`) — cubre el caso que `PushProvider` no cubre: activar
+    el permiso después del login, no en el cold start.
+  - **Desvío del plan, deliberado**: NO reusa `shouldRequestPermission` de
+    `features/push`. Esa función usa el flag `attempted` de AsyncStorage,
+    pensado para el prompt automático de una sola vez en frío
+    (`PushProvider`) — reusarlo acá haría que, tras un primer "no" del
+    usuario, tocar la fila lo mande a Ajustes en vez de mostrarle el diálogo
+    nativo de nuevo aunque `canAskAgain` siga en `true` (Android). En su
+    lugar, `requestOrOpenSettings()` decide directo por `canAskAgain` +
+    `isGranted`: pide el permiso si es pedible y no está concedido; si no,
+    abre Ajustes (también cuando ya está concedido, para que el usuario
+    pueda revisarlo/desactivarlo).
+  - Fila cableada en `ProfileScreen.tsx` entre "Mis direcciones" y "Enviar
+    comentarios" (mismo orden del prototipo), `value` "Activadas"/"Desactivadas".
+  - Tests nuevos: `useNotificationPermission.test.ts` (5 casos: primera
+    lectura sin registrar, transición a concedido registra con el token,
+    los 3 casos de `requestOrOpenSettings`). `ProfileScreen.test.tsx`
+    actualizado con `QueryClientProvider` (ahora necesario -- la pantalla
+    cuelga de `useRegisterDevice`/`useMutation`) y mocks de
+    `expo-notifications` + `expo-router` (`useFocusEffect` real exige un
+    `NavigationContainer` que no existe al renderizar la pantalla sola).
+  - Gate: `pnpm exec jest src/features/profile src/features/push
+src/features/auth --silent` → 15 suites/77 tests OK. `pnpm exec tsc
+--noEmit` → limpio.
 - [ ] C3 — Privacy policy
 - [ ] C4 — Borrado de cuenta

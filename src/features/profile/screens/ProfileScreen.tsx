@@ -6,13 +6,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLogout } from '@/features/auth/hooks/useLogout';
 import { useCartStore } from '@/features/cart/store/cartStore';
 import { colors, PinIcon, radius, spacing, Text } from '@/shared/ui';
-import { ChatIcon } from '../components/icons';
+import { ChatIcon, GearIcon } from '../components/icons';
 import { SettingsRow } from '../components/SettingsRow';
+import { useNotificationPermission } from '../hooks/useNotificationPermission';
 
 export function ProfileScreen() {
   const router = useRouter();
   const { user } = useUser();
   const logout = useLogout();
+  const notificationPermission = useNotificationPermission();
 
   const name = user?.fullName ?? user?.firstName ?? 'Usuario';
   const email = user?.primaryEmailAddress?.emailAddress ?? '';
@@ -51,6 +53,12 @@ export function ProfileScreen() {
             icon={<PinIcon color={colors.text.primary} />}
             label="Mis direcciones"
             onPress={() => router.push('/addresses')}
+          />
+          <SettingsRow
+            icon={<GearIcon />}
+            label="Notificaciones"
+            value={notificationPermission.isGranted ? 'Activadas' : 'Desactivadas'}
+            onPress={notificationPermission.requestOrOpenSettings}
           />
           <SettingsRow
             icon={<ChatIcon />}
