@@ -22,6 +22,8 @@ export type OrderItem = {
 export type Order = {
   id: string;
   businessId: string;
+  /** Gap de contrato cerrado (Fase 6b) -- opcional por robustez si el backend lo omite. */
+  businessName?: string;
   customerId: string;
   status: OrderStatus;
   items: OrderItem[];

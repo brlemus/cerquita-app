@@ -20,19 +20,28 @@ export const OrderRow = memo(function OrderRow({ order, onPress }: OrderRowProps
       ? `${firstItem.productName} y ${restItems.length} más`
       : firstItem.productName
     : '';
+  const shortId = shortOrderId(order.id);
+  const title = order.businessName ?? `Pedido #${shortId}`;
 
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}
       accessibilityRole="button"
-      accessibilityLabel={`Pedido #${shortOrderId(order.id)}`}
+      accessibilityLabel={title}
     >
       <View style={styles.info}>
         <View style={styles.topRow}>
-          <Text variant="bodyLg">Pedido #{shortOrderId(order.id)}</Text>
+          <Text variant="bodyLg" numberOfLines={1} style={styles.title}>
+            {title}
+          </Text>
           <OrderStatusBadge status={order.status} />
         </View>
+        {order.businessName ? (
+          <Text variant="footnote" color="secondary">
+            Pedido #{shortId}
+          </Text>
+        ) : null}
         {itemsSummary ? (
           <Text variant="bodySm" color="secondary" numberOfLines={1}>
             {itemsSummary}
@@ -72,6 +81,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.sm,
+  },
+  title: {
+    flexShrink: 1,
   },
   bottomRow: {
     flexDirection: 'row',
