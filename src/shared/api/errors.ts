@@ -1,3 +1,5 @@
+import type { OrderConflictReason } from './types';
+
 /**
  * Mapeo centralizado del contrato de errores (docs/API_CONTRACT.md).
  * `kind` es lo que cada pantalla debe consumir para decidir su UI — nunca
@@ -66,6 +68,32 @@ function extractDetails(body: unknown): Record<string, unknown> | undefined {
   return isRecord(body) && isRecord(body.details) ? body.details : undefined;
 }
 
+const ORDER_CONFLICT_REASONS = new Set<OrderConflictReason>([
+  'BUSINESS_NOT_ACCEPTING_ORDERS',
+  'BELOW_MINIMUM_ORDER',
+  'PRODUCT_NOT_ACTIVE',
+  'VARIANT_OPTION_NOT_ACTIVE',
+  'INSUFFICIENT_STOCK',
+  'INVALID_STATUS_TRANSITION',
+  'STATUS_CHANGED_CONCURRENTLY',
+  'ORDER_NOT_DELIVERED',
+  'REVIEW_ALREADY_EXISTS',
+]);
+
+/**
+ * Lee `details.reason` y lo valida contra el catálogo conocido -- un string
+ * ajeno o `details` ausente devuelve `undefined` (nunca un cast ciego), para
+ * que los clasificadores de cada feature caigan a su heurística legacy.
+ */
+export function getConflictReason(
+  details: Record<string, unknown> | undefined,
+): OrderConflictReason | undefined {
+  const reason = details?.reason;
+  return typeof reason === 'string' && ORDER_CONFLICT_REASONS.has(reason as OrderConflictReason)
+    ? (reason as OrderConflictReason)
+    : undefined;
+}
+
 /** Mensajes del flujo de re-registro rechazado (docs/API_CONTRACT.md, sección Auth). */
 const RE_REGISTER_BLOCKED_PATTERN = /cannot re-register|already exists/i;
 
@@ -83,7 +111,12 @@ export function mapError(status: number, body: unknown): ApiError {
       return { kind: 'notFound', status, message };
     case 409: {
       const details = extractDetails(body);
-      if (RE_REGISTER_BLOCKED_PATTERN.test(message)) {
+      // Un `reason` reconocido ubica el 409 sin ambigüedad en el dominio
+      // orders/reviews -- nunca es el re-registro de auth (ese catálogo no
+      // tiene `reason`). Evita que REVIEW_ALREADY_EXISTS deje de esquivar
+      // el regex el día que su `message` se traduzca a inglés.
+      const hasKnownReason = getConflictReason(details) !== undefined;
+      if (!hasKnownReason && RE_REGISTER_BLOCKED_PATTERN.test(message)) {
         return { kind: 'reRegisterBlocked', status, message, details };
       }
       return { kind: 'conflict', status, code: extractCode(body), message, details };

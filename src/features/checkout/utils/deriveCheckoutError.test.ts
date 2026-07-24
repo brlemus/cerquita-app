@@ -64,6 +64,65 @@ describe('deriveCheckoutError', () => {
     expect(view?.message).toBe('Algunos productos no tienen stock suficiente');
   });
 
+  it('productInactive (PRODUCT_NOT_ACTIVE) con línea matcheada, incluso con variante: menciona la línea', () => {
+    const error = new ApiRequestError({
+      kind: 'conflict',
+      status: 409,
+      message: 'Product p1 is not active',
+      details: { reason: 'PRODUCT_NOT_ACTIVE', productId: 'p1' },
+    });
+    const view = deriveCheckoutError(error, [paletaCoco, chocobanano]);
+    expect(view).toEqual({
+      message: 'Paleta de sobrilla — Coco ya no está disponible',
+      actionLabel: 'Ajustar carrito',
+      action: 'goToCart',
+    });
+  });
+
+  it('productInactive (VARIANT_OPTION_NOT_ACTIVE) con línea matcheada: menciona la línea', () => {
+    const error = new ApiRequestError({
+      kind: 'conflict',
+      status: 409,
+      message: 'Variant option coco is not active',
+      details: { reason: 'VARIANT_OPTION_NOT_ACTIVE', variantOptionId: 'coco' },
+    });
+    const view = deriveCheckoutError(error, [paletaCoco, chocobanano]);
+    expect(view?.message).toBe('Paleta de sobrilla — Coco ya no está disponible');
+  });
+
+  it('productInactive sin línea que matchee: copy genérica', () => {
+    const error = new ApiRequestError({
+      kind: 'conflict',
+      status: 409,
+      message: 'Product x is not active',
+      details: { reason: 'PRODUCT_NOT_ACTIVE', productId: 'ya-no-existe' },
+    });
+    const view = deriveCheckoutError(error, [paletaCoco]);
+    expect(view?.message).toBe('Uno de los productos de tu carrito ya no está disponible');
+  });
+
+  it('BELOW_MINIMUM_ORDER con reason: usa el copy fijo, no el message crudo del backend', () => {
+    const error = new ApiRequestError({
+      kind: 'conflict',
+      status: 409,
+      message: 'Order subtotal (650) is below the business minimum (800)',
+      details: { reason: 'BELOW_MINIMUM_ORDER', subtotalCents: 650, minOrderCents: 800 },
+    });
+    const view = deriveCheckoutError(error, []);
+    expect(view?.message).toBe('Tu pedido no alcanza el mínimo de compra de este negocio');
+  });
+
+  it('reason fuera del catálogo de checkout: usa el message del backend, acción reintentar', () => {
+    const error = new ApiRequestError({
+      kind: 'conflict',
+      status: 409,
+      message: 'Something new the backend added',
+      details: { reason: 'STATUS_CHANGED_CONCURRENTLY' },
+    });
+    const view = deriveCheckoutError(error, []);
+    expect(view?.action).toBe('retry');
+  });
+
   it('businessClosed', () => {
     const error = new ApiRequestError({
       kind: 'conflict',

@@ -6,6 +6,7 @@ import { Button, colors, radius, spacing, Text, TextField } from '@/shared/ui';
 import { useCreateReview } from '../hooks/useCreateReview';
 import { reviewSchema } from '../schemas';
 import { isOrderReviewed, useReviewedOrdersStore } from '../store/reviewedOrdersStore';
+import { classifyReviewConflict } from '../utils/classifyReviewConflict';
 import { StarRatingInput } from './StarRatingInput';
 
 export type OrderReviewCardProps = {
@@ -44,10 +45,16 @@ export function OrderReviewCard({ orderId }: OrderReviewCardProps) {
     }
     createReview.mutate(result.data, {
       onError: (err) => {
-        // 409 (ya reseñado) marca `reviewed` en el hook -- la card cambia
-        // sola al estado de "gracias", sin mensaje de error acá.
         if (err instanceof ApiRequestError && err.error.kind === 'conflict') {
-          return;
+          const kind = classifyReviewConflict(err.error.details);
+          if (kind === 'alreadyReviewed') {
+            // el hook ya marcó reviewed -- la card cambia sola al estado de "gracias".
+            return;
+          }
+          if (kind === 'orderNotDelivered') {
+            setError('Todavía no podés calificar este pedido.');
+            return;
+          }
         }
         setError('No pudimos enviar tu reseña. Intentá de nuevo.');
       },
