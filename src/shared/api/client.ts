@@ -48,7 +48,20 @@ export async function requestRaw(
   options: RequestOptions = {},
 ): Promise<{ response: Response; body: unknown }> {
   const { body, headers, ...rest } = options;
-  const token = await getAuthToken();
+
+  // getAuthToken() (getToken() de Clerk) puede rechazar si la sesión se
+  // cierra mientras este request está en vuelo (ej. logout con un poll
+  // activo) -- se trata como "sin token" en vez de dejar el rechazo
+  // propagar sin atrapar fuera de esta función.
+  let token: string | null | undefined;
+  try {
+    token = await getAuthToken();
+  } catch (error) {
+    if (__DEV__) {
+      console.log('[api] getAuthToken falló, se continúa sin token:', error);
+    }
+    token = null;
+  }
 
   let response: Response;
   try {
