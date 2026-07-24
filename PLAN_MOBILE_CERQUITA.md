@@ -1,10 +1,10 @@
 # Cerquita — Plan de la App Mobile v1
 
 App móvil de Cerquita. El MVP (Fases 0-9) es **customer puro**; a partir de
-ahí la misma app suma un **modo owner** para dueños de negocio (ver
-"Re-alcance: modo owner" más abajo) — el repo web queda acotado a **solo el
-panel de super-admin**, no a owner/admin en general como se asumía
-originalmente. Consume `cerquita-api` (NestJS, en producción) según
+ahí la misma app suma un **modo owner** para dueños de negocio (Fases
+10-14, ver "Modo owner: Fases 10-14" más abajo) — el repo web queda
+acotado a **solo el panel de super-admin**, no a owner/admin en general
+como se asumía originalmente. Consume `cerquita-api` (NestJS, en producción) según
 `docs/API_CONTRACT.md` — el contrato está fijado, esta app se adapta a él.
 Diseño importado de Claude Design (`docs/design/`, tokens en
 `docs/design/TOKENS.md`).
@@ -145,9 +145,13 @@ MVP (no como parche final):
 - **Privacy policy** accesible desde Perfil (URL a definir — pendiente de
   tu input cuando lleguemos a esa fase si no existe ya una).
 - **Justificación de permisos in-context**: pantalla propia antes de
-  pedir ubicación ("para calcular tu envío") y antes de pedir
-  notificaciones ("para avisarte el estado de tu pedido") — nunca pedidos
-  en cold start sin contexto.
+  pedir ubicación ("para calcular tu envío") — nunca pedidos en cold
+  start sin contexto. **Notificaciones usan un patrón distinto** (decisión
+  vigente desde Fase 5, ver `docs/phases/phase-5-tracking.md`, sección
+  "Decisión: permiso de notificaciones sin paso intermedio"): el permiso
+  se pide directo al autenticarse, sin tarjeta intermedia — decisión de
+  producto bajo el principio rector del proyecto (mejor UX medida en
+  fricción real evitada, no en menos código).
 - **Fallback si se niega un permiso**: el flujo de dirección de entrega
   SIEMPRE es completable sin GPS (entrada manual del campo `line`/
   referencia) — Apple rechaza apps donde negar un permiso rompe el flujo
@@ -162,6 +166,11 @@ MVP (no como parche final):
 
 ## Fases (una por PR)
 
+_Nota de trazabilidad_: el PR #9 (`chore-app-icon`) es anterior a la regla
+de plan file por unidad de trabajo (nacida en el PR #10,
+`fix-logout-unhandled-rejection`) — su detalle vive en el README de
+`assets/brand/` y en el historial de PRs, no en `docs/phases/`.
+
 | Fase                                  | Entregable                                                                                                                                                                                                                                                                                                                                                                    |
 | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **0 — Scaffold**                      | Expo + TS strict; ESLint/Prettier/Husky/lint-staged; **CI de GitHub Actions corriendo lint + typecheck + test en cada PR**; theme (`shared/ui/theme.ts`) derivado de `docs/design/TOKENS.md`; estructura de carpetas por feature; API client base (`shared/api/client.ts`) con manejo de `Authorization` y mapeo de errores del contrato (aún sin login real que lo alimente) |
@@ -172,8 +181,8 @@ MVP (no como parche final):
 | **5 — Tracking + Push**               | Polling de `GET /orders/:id/status` respetando `ETag`/`If-None-Match`/304 y el límite de 30/min; registro/baja de device token en login/logout (`POST`/`DELETE /devices`). **Requiere development build desde esta fase** (ver riesgo técnico abajo)                                                                                                                          |
 | **6a — Tab bar + Mis pedidos**        | Partición de la Fase 6 original (ver `docs/phases/phase-6-orders-tabs.md`): tab bar definitiva (Inicio/Pedidos/Perfil, con Perfil como stub mínimo — nombre/email de Clerk + cerrar sesión, el resto es Fase 7) y pantalla "Mis pedidos" (`GET /orders`, infinite scroll, pull-to-refresh, badge de estado) navegando al tracking de la Fase 5                                |
 | **6b — Reviews + Feedback**           | Review post-`ENTREGADO` (una por pedido), formulario de feedback general — PR aparte de la 6a, todavía sin planificar en detalle                                                                                                                                                                                                                                              |
-| **7 — Perfil + Borrado de cuenta**    | Pantalla de perfil completa (reemplaza el stub de la 6a): borrado de cuenta vía Clerk (ver Store readiness), privacy policy accesible, más opciones de cuenta                                                                                                                                                                                                                 |
-| **8 — Hardening + Store readiness**   | Checklist final de MASVS, accesibilidad (safe areas, touch targets, contraste), pantallas de permisos con contexto, ATT documentado como no-aplica, auditoría de logs sensibles                                                                                                                                                                                               |
+| **7 — Perfil + Borrado de cuenta**    | Pantalla de perfil completa (reemplaza el stub de la 6a): borrado de cuenta vía Clerk (ver Store readiness), privacy policy accesible, recuperación de contraseña, y las filas de paridad del prototipo (Mis direcciones, Notificaciones, Formas de pago diferida) — ver "Fase 7 — Perfil real (detalle)" abajo                                                               |
+| **8 — Hardening + Store readiness**   | Checklist final de MASVS, accesibilidad (safe areas, touch targets, contraste), pantallas de permisos con contexto, ATT documentado como no-aplica, auditoría de logs sensibles, persistencia del Idempotency-Key en curso (límite aceptado en Fase 4, ver `docs/phases/phase-4-checkout.md`)                                                                                 |
 | **9 — Publicación**                   | Ver checklist al final de este documento                                                                                                                                                                                                                                                                                                                                      |
 
 ### Riesgo técnico conocido — Fase 5 (push, iOS vs Android)
@@ -204,37 +213,134 @@ caminos distintos Android/iOS), con el entendido de que vos configurás
 las credenciales de Firebase/APNs antes de que la fase pueda probarse
 end-to-end en un device iOS real.
 
-## Re-alcance: modo owner (decisión post-Fase 1.5)
+### Fase 7 — Perfil real (detalle)
+
+Adiciones sobre el alcance ya definido en la tabla de arriba, incorporadas
+tras el análisis de paridad contra el prototipo (pantalla CLIENT: PROFILE):
+
+- Fila **"Mis direcciones"** → entrada a la gestión de direcciones ya
+  construida en Fase 4 (hoy solo alcanzable desde checkout). Reuso, costo
+  bajo.
+- Fila **"Notificaciones"** → alcance mínimo: estado del permiso + acceso
+  a ajustes del sistema. `[PENDIENTE-BYRON]` si se quiere opt-out de push
+  promocional in-app (hoy no hay push promocional — probablemente
+  diferir).
+- Fila **"Formas de pago"**: `[DECISIÓN: diferida]` — el MVP es efectivo
+  contra entrega; la fila NO se muestra hasta que exista más de una forma
+  de pago. Documentar como recorte temporal, no permanente.
+- **Recuperación de contraseña**: integrar acá el chore ya definido en el
+  backlog (flujo Clerk reset por código reusando el patrón de 6 dígitos de
+  Fase 1 + restaurar el link "¿Olvidaste tu contraseña?" del spec 8b).
+  Fase 7 es su hogar natural: cierra el auth completo.
+
+## Modo owner: Fases 10-14 (post-Fase 9)
 
 **Cambio de alcance respecto a la v1 original de este documento**: el modo
-owner **sí vive en esta app**, en fases posteriores a las de customer
-(post-Fase 9 — números de fase TBD, se planifican recién cuando se lleguen a
-abordar, no ahora). El repo web deja de ser "owner/admin" en general y queda
-acotado a **solo el panel de super-admin**.
+owner **sí vive en esta app**, en fases posteriores a las de customer. El
+repo web queda acotado a **solo el panel de super-admin**, no a
+owner/admin en general como se asumía originalmente.
 
-A alto nivel (sin desglose de checkpoints todavía — eso es planificación de
-esas fases futuras):
+Partición en fases numeradas (10 a 14). Regla heredada del resto del plan:
+cada fase produce su plan file al abordarse — el orden 10→14 es la
+secuencia recomendada (10 y 11 son prerequisito del resto). **Cada fase
+lista sus prerequisitos de backend**: esos se planifican como fases/chores
+en `cerquita-api` con su propio plan, ANTES de la fase mobile que los
+consume.
 
-- **Alta de negocio desde Perfil**: auto-servicio contra el backend, que ya
-  soporta la promoción de un `User` a `BUSINESS_OWNER` (endpoints
-  `business/me/*`, ya en producción). Punto de entrada tipo "¿Tenés un
-  negocio?" en Perfil.
-- **Chooser post-login** ("¿Dónde querés entrar?"): solo aparece para
-  usuarios que ya tienen `businessId` (son owner). El diseño de esta
-  pantalla ya está en `docs/design/` (prototipo completo, incluye rol
-  chooser).
-- **Panel de pedidos entrantes** (owner): ver pedidos del propio negocio y
-  cambiar su estado (transiciones permitidas al actor `BUSINESS`, ver
-  `docs/API_CONTRACT.md` sección Orders).
-- **Catálogo básico** (owner): alta/edición simple de productos del propio
-  negocio.
-- **Toggle `isOpen`** (owner): contra `business/me/*`.
+### Fase 10 — Fundaciones del modo owner (identidad, chooser, negocio)
 
-**Sin cambios**: el registro sigue sin selector de rol — todo usuario nuevo
-nace `CUSTOMER` vía el flujo JIT del backend (decisión ya confirmada en
-Fase 1, ver `docs/phases/phase-1-auth.md`). La promoción a `BUSINESS_OWNER`
-pasa exclusivamente por el flujo de auto-servicio desde Perfil, nunca por un
-selector en el registro.
+Pantallas del prototipo: CHOOSER (owner), ADMIN: CREATE BUSINESS, parte de
+ADMIN: PROFILE.
+
+- Punto de entrada "¿Tenés un negocio?" desde Perfil del cliente (backlog
+  de Fase 1, por fin ejecutado) → flujo de conversión a owner.
+- `[PENDIENTE-BYRON]` mecánica de alta: ¿auto-servicio (el usuario crea su
+  negocio y queda `PENDING` hasta aprobación del super-admin en el panel
+  web) o solo por invitación del super-admin? El prototipo sugiere
+  auto-servicio (selector "Tengo un negocio" en registro — que se
+  descartó por JIT; la conversión post-registro desde Perfil lo
+  reemplaza).
+- Pantalla **Crear negocio**: nombre, categoría de plataforma, costo de
+  envío, mínimo de compra, tiempo estimado, **logo → Cloudinary** (primer
+  flujo de upload del mobile).
+- **Chooser post-login** ("¿Dónde querés entrar?") para usuarios con
+  negocio + switch bidireccional cliente↔admin sin re-login (filas
+  "Cambiar a..." de ambos perfiles del prototipo).
+- Prerequisitos backend (verificar contra `API_CONTRACT` antes de
+  planear): flujo de conversión de rol/alta de negocio por el propio
+  usuario; firma/endpoint de upload a Cloudinary (`StoragePort` existe;
+  falta la ruta pública de firma).
+
+### Fase 11 — Pedidos entrantes (operación diaria)
+
+Pantallas: ADMIN: DASHBOARD, ADMIN: ORDER DETAIL.
+
+- Lista de pedidos entrantes (badge de nuevos, orden cronológico) con
+  actualización en vivo (polling con el patrón ETag existente; push al
+  owner como mejora si el backend lo soporta).
+- Detalle de pedido con datos del cliente, productos y **cambiar estado**
+  (la transición manual que hoy se hace por Swagger, por fin en la app).
+- Toggle **`isOpen`** del negocio (abrir/cerrar tienda).
+- Prerequisitos backend: los endpoints owner de pedidos existen
+  (`business/me/orders`); verificar push/aviso al owner de pedido nuevo y
+  de cancelación (este último ya está en backlog del backend como fase
+  8-BE).
+
+### Fase 12 — Catálogo del owner
+
+Pantallas: ADMIN: PRODUCTS (tabs Productos/Categorías), ADMIN: EDIT
+PRODUCT. Es la fase más grande del continente owner — particionar en su
+plan file (mínimo 12a/12b):
+
+- **12a**: lista de productos, CRUD de **categorías del catálogo**,
+  alta/edición básica de producto (nombre, descripción, precio, stock,
+  categoría, toggle activo/visible, **foto → Cloudinary**).
+- **12b**: **variantes** — grupos de opciones, recargo de precio por
+  opción, stock por opción (el modelo de inventario real del negocio:
+  cada sabor de paleta es su unidad). El formulario del prototipo (la
+  pantalla más compleja de todo el diseño) manda como spec.
+- Prerequisitos backend: CRUD owner de productos/categorías/variantes
+  existe de las fases BE tempranas; verificar upload de foto de producto.
+
+### Fase 13 — Resumen (analytics del negocio)
+
+Pantalla: ADMIN: RESUMEN.
+
+- Métricas del mes: ventas, pedidos, ticket promedio, gráfico de ventas
+  por día (7 días), productos bajos en stock, más vendidos, pedidos por
+  estado.
+- `[PENDIENTE-BYRON]` la métrica **"Ganancia"** del prototipo requiere
+  costo por producto, que el modelo no tiene. Opciones: (a) recortarla y
+  mostrar solo ventas, (b) agregar campo de costo opcional al producto
+  (cambio de modelo BE + formulario de Fase 12). Documentar abierta.
+- **Prerequisito backend duro**: NO existen endpoints de
+  agregación/analytics en ninguna fase del backend. Esta fase mobile
+  exige primero una fase BE nueva ("analytics del owner": agregaciones
+  por rango de fechas, cacheables). La Fase 13 mobile no se planifica
+  hasta que esa fase BE esté especificada.
+
+### Fase 14 — Perfil del owner + cierre del círculo de reseñas
+
+Pantalla: ADMIN: PROFILE + lectura de reseñas/feedback.
+
+- **Editar negocio** (los mismos campos de Crear negocio + logo).
+- Fila **"Métodos de cobro"**: `[DECISIÓN: diferida]` igual que Formas de
+  pago del cliente — efectivo-only; la fila no se muestra hasta que
+  exista otra.
+- **Lectura de reseñas por el owner**: el lado faltante de la Fase
+  6b/12-BE — el owner ve rating promedio y comentarios de sus pedidos (el
+  contrato BE de Fase 12 ya restringe comentarios a owner + super-admin;
+  verificar/crear el endpoint de listado owner). Cierra el círculo: hoy
+  las reseñas se escriben y nadie las lee.
+- Datos de la cuenta (reuso del Perfil de cliente).
+
+### Sin cambios respecto al registro
+
+El registro sigue sin selector de rol — todo usuario nuevo nace
+`CUSTOMER` vía el flujo JIT del backend (decisión ya confirmada en Fase
+1, ver `docs/phases/phase-1-auth.md`). La promoción a `BUSINESS_OWNER`
+pasa exclusivamente por el flujo de auto-servicio desde Perfil (Fase 10),
+nunca por un selector en el registro.
 
 ## Paridad con el prototipo
 
@@ -245,21 +351,22 @@ de "qué pasó con cada uno" — para no tener que redescubrir en cada fase
 si algo quedó pendiente, se recortó a propósito, o directamente no es
 construible con el backend actual.
 
-| Elemento del prototipo                              | Destino                                          | Nota                                                                                                                                                                                                                                                                               |
-| --------------------------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| CTA "Ir a pagar" del carrito                        | Fase 4                                           | Ya estaba en el alcance de Checkout — la Fase 3 lo dejó fuera a propósito, sin destino todavía (ver `docs/phases/phase-3-cart.md`).                                                                                                                                                |
-| Selector de dirección de entrega                    | Fase 4                                           | Ya estaba en el alcance (CRUD de direcciones + selección de dirección guardada).                                                                                                                                                                                                   |
-| "Sugerencias del negocio" en el carrito             | Fase 4 (alcance sumado)                          | El prototipo las muestra en la pantalla de carrito (productos del mismo negocio no agregados todavía). Se suman a Checkout porque comparten lógica de "agregar sin pasar por Product Detail" con el punto siguiente.                                                               |
-| Quick-add "+" para productos sin variantes          | Fase 4 (alcance sumado)                          | Mismo patrón que las sugerencias (tarjeta chica con "+" directo, sin abrir Product Detail). La Fase 3 solo resolvió el flujo completo vía Product Detail; el atajo se suma a Fase 4 en vez de abrir un checkpoint aparte ahora.                                                    |
-| Tab bar (Inicio/Pedidos/Perfil)                     | Fase 6a — construida                             | Fase 2 ya documentó que un shell de tabs con destinos vacíos no se justifica (`docs/phases/phase-2-marketplace.md`). Pedidos fue el primer segundo-destino real de primer nivel de la app — ahí se decidió y se construyó. Perfil queda como stub hasta la Fase 7.                 |
-| Nombre/logo del negocio en la fila de "Mis pedidos" | Bloqueado — gap de contrato (nuevo, Fase 6a)     | `GET /orders` (`OrderResponseDto`) trae `businessId` pero no `businessName`/`logoUrl` — mostrarlo exigiría un fetch por pedido (N+1), descartado. La fila muestra estado, fecha, resumen de ítems y total; necesita que el backend sume el campo al DTO de `Order`.                |
-| Chips de categoría de catálogo (detalle de negocio) | Bloqueado — gap de contrato                      | Ya anotado en Fase 2: falta `catalogCategoryName` en el DTO de producto (o un endpoint de categorías de catálogo). Sin nombre legible no hay chip que mostrar sin inventar.                                                                                                        |
-| Búsqueda de productos                               | Bloqueado — gap de contrato                      | Ya anotado en Fase 2: `GET /marketplace/businesses` solo expone `search` sobre el nombre del negocio; no existe búsqueda de productos en el contrato.                                                                                                                              |
-| Orden por cercanía                                  | Bloqueado — gap de contrato (nuevo, anotado acá) | `Business` tiene `lat`/`lng` (nullable), pero `GET /marketplace/businesses` no expone ningún parámetro de orden/distancia — solo paginación por cursor. Sin ese parámetro en el backend no hay forma de pedir "más cercanos primero".                                              |
-| Banner promocional (Home)                           | Backlog post-MVP                                 | Requiere un modelo de promociones (tabla + endpoint) que hoy no existe en el contrato — ver ítem agregado en Backlog post-MVP, abajo.                                                                                                                                              |
-| Campana de notificaciones (Home)                    | Recorte permanente                               | El push de Fase 5 deep-linkea directo al pedido correspondiente (`docs/API_CONTRACT.md`, sección Devices). Un centro de notificaciones aparte sería UI sin función real, no una fase pendiente.                                                                                    |
-| Fotos de producto reales                            | Dato pendiente (Cloudinary + fases owner)        | El campo `photoUrl` ya se consume donde existe, con fallback diseñado cuando es `null` (Fase 2/3). Las fotos reales dependen de que el flujo de upload a Cloudinary y el catálogo de modo owner (ver "Re-alcance: modo owner" arriba) estén construidos y en uso por los negocios. |
-| Pill "Próximamente" (negocio/producto no activo)    | Recorte permanente                               | El contrato solo expone `status: ACTIVE`/`isActive: true` al customer (`docs/API_CONTRACT.md`, sección Marketplace) — un negocio o producto `PENDING`/inactivo nunca llega al cliente, así que no hay estado que mostrar.                                                          |
+| Elemento del prototipo                              | Destino                                          | Nota                                                                                                                                                                                                                                                                                |
+| --------------------------------------------------- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CTA "Ir a pagar" del carrito                        | Fase 4                                           | Ya estaba en el alcance de Checkout — la Fase 3 lo dejó fuera a propósito, sin destino todavía (ver `docs/phases/phase-3-cart.md`).                                                                                                                                                 |
+| Selector de dirección de entrega                    | Fase 4                                           | Ya estaba en el alcance (CRUD de direcciones + selección de dirección guardada).                                                                                                                                                                                                    |
+| "Sugerencias del negocio" en el carrito             | Fase 4 (alcance sumado)                          | El prototipo las muestra en la pantalla de carrito (productos del mismo negocio no agregados todavía). Se suman a Checkout porque comparten lógica de "agregar sin pasar por Product Detail" con el punto siguiente.                                                                |
+| Quick-add "+" para productos sin variantes          | Fase 4 (alcance sumado)                          | Mismo patrón que las sugerencias (tarjeta chica con "+" directo, sin abrir Product Detail). La Fase 3 solo resolvió el flujo completo vía Product Detail; el atajo se suma a Fase 4 en vez de abrir un checkpoint aparte ahora.                                                     |
+| Tab bar (Inicio/Pedidos/Perfil)                     | Fase 6a — construida                             | Fase 2 ya documentó que un shell de tabs con destinos vacíos no se justifica (`docs/phases/phase-2-marketplace.md`). Pedidos fue el primer segundo-destino real de primer nivel de la app — ahí se decidió y se construyó. Perfil queda como stub hasta la Fase 7.                  |
+| Nombre/logo del negocio en la fila de "Mis pedidos" | **Parcial**                                      | `businessName` resuelto (Fase 6b, consumido en `OrderRow`); `logoUrl` del negocio pendiente de consumir (el DTO ya lo expone desde Fase 6b, no se agregó a la fila).                                                                                                                |
+| Chips de categoría de catálogo (detalle de negocio) | **Resuelto** (Fase 6b)                           | Pill por producto en `ProductCard`, no fila de chips filtrable. Decisión de diseño: un filtro real requiere soporte de backend — ver Backlog post-MVP, "Filtro real por categoría en detalle de negocio".                                                                           |
+| Búsqueda de productos                               | Bloqueado — gap de contrato                      | Ya anotado en Fase 2: `GET /marketplace/businesses` solo expone `search` sobre el nombre del negocio; no existe búsqueda de productos en el contrato.                                                                                                                               |
+| Orden por cercanía                                  | Bloqueado — gap de contrato (nuevo, anotado acá) | `Business` tiene `lat`/`lng` (nullable), pero `GET /marketplace/businesses` no expone ningún parámetro de orden/distancia — solo paginación por cursor. Sin ese parámetro en el backend no hay forma de pedir "más cercanos primero".                                               |
+| Banner promocional (Home)                           | Backlog post-MVP                                 | Requiere un modelo de promociones (tabla + endpoint) que hoy no existe en el contrato — ver ítem agregado en Backlog post-MVP, abajo.                                                                                                                                               |
+| Campana de notificaciones (Home)                    | Recorte permanente                               | El push de Fase 5 deep-linkea directo al pedido correspondiente (`docs/API_CONTRACT.md`, sección Devices). Un centro de notificaciones aparte sería UI sin función real, no una fase pendiente.                                                                                     |
+| Fotos de producto reales                            | Dato pendiente (Cloudinary + fases owner)        | El campo `photoUrl` ya se consume donde existe, con fallback diseñado cuando es `null` (Fase 2/3). Las fotos reales dependen de que el flujo de upload a Cloudinary y el catálogo de modo owner (ver "Modo owner: Fases 10-14" arriba) estén construidos y en uso por los negocios. |
+| Pill "Próximamente" (negocio/producto no activo)    | Recorte permanente                               | El contrato solo expone `status: ACTIVE`/`isActive: true` al customer (`docs/API_CONTRACT.md`, sección Marketplace) — un negocio o producto `PENDING`/inactivo nunca llega al cliente, así que no hay estado que mostrar.                                                           |
+| Cuarta tab "Buscar" (tab bar del prototipo, 4 tabs) | Recorte deliberado                               | `[DECISIÓN: desviación deliberada]` — la app usa 3 tabs (Inicio/Pedidos/Perfil) + búsqueda pusheada desde Home (Fase 6a, verificada en uso). Ver Backlog post-MVP para el detalle; revisable si el uso real lo pide.                                                                |
 
 ## Backlog post-MVP
 
@@ -286,8 +393,41 @@ construible con el backend actual.
   device. Si el backend suma un campo aditivo (mismo patrón del chore de
   DTO parity — `businessName`/`catalogCategoryName`), el store pasa de
   fuente de verdad a cache.
+- **MFA (segundo factor)**: soporte parcial — `email_code` implementado en
+  Fase 5 (`SecondFactorScreen`, ver `docs/phases/phase-1-auth.md` y
+  `docs/phases/phase-5-tracking.md`); TOTP y otras estrategias sin
+  soportar. Nota: la verificación de dispositivo nuevo de Clerk (código en
+  el primer sign-in por dispositivo) usa esta misma pantalla y es
+  comportamiento deseado, no un caso pendiente.
 - Lo que quede fuera de alcance de las fases 0-9 según se vaya
   descubriendo durante el desarrollo.
+
+### Backlog — paridad del prototipo (análisis v2)
+
+| Ítem                                                   | Origen (prototipo)             | Nota                                                                                                                                                                                                                                                                                       |
+| ------------------------------------------------------ | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Header de Home "Entregar en [dirección]"               | CLIENT: HOME                   | Contexto de dirección activa en el marketplace. Requiere noción de "dirección seleccionada" fuera del checkout.                                                                                                                                                                            |
+| Reorder ("Volvé a pedir") en carrito vacío             | CLIENT: CART                   | Re-crear carrito desde un pedido pasado. Sin backend nuevo (usa historial).                                                                                                                                                                                                                |
+| Sugerencias en carrito ("para vos" / "del negocio")    | CLIENT: CART                   | Requiere lógica de recomendación — sin señal real todavía (mismo criterio YAGNI que ranking).                                                                                                                                                                                              |
+| Filtro real por categoría en detalle de negocio        | Decisión Fase 6b               | Requiere query param de categoría en backend (+ opcional endpoint de categorías del negocio).                                                                                                                                                                                              |
+| Cuarta tab "Buscar"                                    | Tab bar del prototipo (4 tabs) | `[DECISIÓN: desviación deliberada]` — la app usa 3 tabs + búsqueda pusheada desde Home (Fase 6a, verificada en uso). Documentado en la tabla de paridad como recorte consciente, revisable si el uso real lo pide.                                                                         |
+| Info de repartidor en tracking ("Repartidor asignado") | CLIENT: TRACKING               | `[PENDIENTE-BYRON]` — no existe modelo de courier en el backend. Decisión de producto entera: ¿los negocios entregan con su propia gente (recorte permanente) o habrá repartidores como entidad (fase mayor futura)? Hasta decidirse: fila de paridad "Pendiente de decisión de producto". |
+
+## Decisiones de producto pendientes
+
+Registro centralizado de decisiones abiertas — ninguna fase las resuelve
+por su cuenta; se marcan `[PENDIENTE-BYRON]` en el lugar donde aparecen y
+se listan acá para no perderlas de vista:
+
+1. **Repartidor/courier**: ¿recorte permanente (los negocios entregan con
+   su propia gente) o entidad futura del modelo? Ver Backlog post-MVP,
+   "Info de repartidor en tracking".
+2. **Mecánica de alta de negocio**: auto-servicio con aprobación del
+   super-admin vs. solo por invitación. Ver Fase 10.
+3. **Métrica "Ganancia"** del resumen del owner: recortarla (solo ventas)
+   vs. agregar costo por producto al modelo. Ver Fase 13.
+4. **Notificaciones promocionales in-app**: alcance del opt-out en la fila
+   "Notificaciones" de Perfil (hoy no hay push promocional). Ver Fase 7.
 
 ## Publicación (Fase 9 — checklist)
 
@@ -301,3 +441,15 @@ Paso a paso, marcando qué es tuyo vs de Claude Code:
 6. **`eas submit`** — **NO lo ejecuta Claude Code**, lo corrés vos.
 7. **Revisión de Apple/Google** — esperar resultado; si hay rechazo, Claude Code ayuda a diagnosticar y corregir contra el checklist de Store readiness (Fase 8).
 8. **Producción** — publicación final, **tuya**.
+9. **Migrar "Sign in with Apple" a flujo nativo** (`useSignInWithApple`) —
+   reemplaza el flujo OAuth web actual (`useSSO`, ver
+   `docs/phases/phase-1.5-social-login.md`); requiere el Team ID real de
+   Apple Developer en Clerk, disponible recién con la cuenta paga.
+10. **Cargar credenciales de producción de Apple y Google en Clerk** —
+    Google: config en Google Cloud Console (ver
+    `docs/phases/phase-1.5-social-login.md`); Apple: bloqueado hasta la
+    cuenta de Apple Developer (mismo paso 1 de este checklist).
+
+Nota: el splash de marca v2 (dirección 8b) ya está en `main` esperando el
+próximo rebuild nativo — los builds de producción de esta fase lo estrenan
+sin trabajo extra.
