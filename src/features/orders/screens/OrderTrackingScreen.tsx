@@ -11,7 +11,7 @@ import { OrderStatusStepper } from '../components/OrderStatusStepper';
 import { useCancelOrder } from '../hooks/useCancelOrder';
 import { useOrder } from '../hooks/useOrder';
 import { useOrderStatus } from '../hooks/useOrderStatus';
-import { statusLabel } from '../utils/orderStatus';
+import { shortOrderId, statusLabel } from '../utils/orderStatus';
 
 /**
  * Fuente de verdad del pedido completo: `useOrder` (una vez). El estado
@@ -51,7 +51,7 @@ export function OrderTrackingScreen() {
     );
   }
 
-  const shortId = order.id.replace(/-/g, '').slice(-6).toUpperCase();
+  const shortId = shortOrderId(order.id);
   const isCancelled = effectiveStatus === 'CANCELADO';
   const canCancel = effectiveStatus === 'PENDIENTE';
 

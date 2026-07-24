@@ -1,3 +1,4 @@
+import { colors } from '@/shared/ui';
 import type { OrderStatus } from '../api/types';
 
 export type OrderStep = {
@@ -62,4 +63,42 @@ export function statusLabel(status: OrderStatus): string {
     case 'CANCELADO':
       return 'Pedido cancelado';
   }
+}
+
+/** Etiqueta corta para el badge compacto de "Mis pedidos" (statusLabel es de una oración). */
+export function statusBadgeLabel(status: OrderStatus): string {
+  switch (status) {
+    case 'PENDIENTE':
+      return 'Pendiente';
+    case 'PREPARANDO':
+      return 'Preparando';
+    case 'EN_CAMINO':
+      return 'En camino';
+    case 'ENTREGADO':
+      return 'Entregado';
+    case 'CANCELADO':
+      return 'Cancelado';
+  }
+}
+
+export type StatusBadgeStyle = { bg: string; fg: string };
+
+/**
+ * `CANCELADO` reusa `surface.subtle` como fondo -- mismo criterio que el
+ * hero card cancelado de `OrderTrackingScreen` (no hay un tinte de
+ * `danger` en TOKENS.md, no se inventa uno nuevo).
+ */
+export function statusBadgeStyle(status: OrderStatus): StatusBadgeStyle {
+  if (status === 'ENTREGADO') {
+    return { bg: colors.success.bg, fg: colors.success.default };
+  }
+  if (status === 'CANCELADO') {
+    return { bg: colors.surface.subtle, fg: colors.danger.default };
+  }
+  return { bg: colors.brand.tint, fg: colors.brand.dark };
+}
+
+/** Mismo formato que ya usan `OrderConfirmationScreen`/`OrderTrackingScreen`. */
+export function shortOrderId(orderId: string): string {
+  return orderId.replace(/-/g, '').slice(-6).toUpperCase();
 }
