@@ -1,6 +1,6 @@
 # Chore — Consumir `details.reason` + `review` embebida
 
-**Estado**: Planificado, no iniciado.
+**Estado**: Implementado, gate de cierre en verde. Pendiente: PR + merge.
 
 ## Contexto
 
@@ -309,4 +309,9 @@ src/features/orders/utils src/features/reviews --silent` → 13
     +1 caso de invalidación.
   - Gate: `pnpm exec jest src/features/reviews src/features/orders
 --silent` → 11 suites/61 tests OK. `pnpm exec tsc --noEmit` → limpio.
-- [ ] Cierre: gate completo + PR
+- [x] **Cierre.** `pnpm exec jest --silent` → **57 suites, 302 tests, 0
+      fallos**. `pnpm exec tsc --noEmit` → limpio. `pnpm lint` → 0 errores,
+      2 warnings preexistentes (de Fase 7a, `react-hooks/exhaustive-deps`
+      sobre mocks de `useFocusEffect` en tests, no en código de
+      producción — no introducidos por este chore). PR abierto, link
+      pasado al usuario.
