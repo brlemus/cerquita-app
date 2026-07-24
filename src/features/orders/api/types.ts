@@ -1,3 +1,5 @@
+import type { OrderReviewSummary } from '@/features/reviews/api/types';
+
 /**
  * DTOs de pedidos (docs/API_CONTRACT.md, sección 4). Espejo 1:1 del
  * contrato -- el backend está fijado, esta app se adapta a él.
@@ -24,6 +26,7 @@ export type Order = {
   businessId: string;
   /** Gap de contrato cerrado (Fase 6b) -- opcional por robustez si el backend lo omite. */
   businessName?: string;
+  logoUrl?: string | null;
   customerId: string;
   status: OrderStatus;
   items: OrderItem[];
@@ -38,6 +41,14 @@ export type Order = {
   etaMinutes?: number;
   paymentMethod: 'CASH';
   createdAt: string;
+  /**
+   * Fuente de verdad de "ya calificado" (`review !== null`) -- reemplaza
+   * `reviewedOrdersStore`, que pasa a ser cache optimista. `undefined` en
+   * respuestas que el contrato declara sin este campo (ninguna hoy en
+   * `GET /orders`/`GET /orders/:id`/`POST /orders`; `undefined` es solo
+   * defensivo, igual que `businessName?`).
+   */
+  review?: OrderReviewSummary | null;
 };
 
 /** Respuesta liviana de `GET /orders/:id/status` -- el polling con ETag. */

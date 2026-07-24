@@ -5,7 +5,9 @@ import { colors, spacing } from '@/shared/ui';
 
 export type StarRatingInputProps = {
   value: number;
-  onChange: (value: number) => void;
+  onChange?: (value: number) => void;
+  /** Solo muestra el valor, sin permitir tocar -- estado "gracias" de OrderReviewCard. */
+  readOnly?: boolean;
 };
 
 const STAR_PATH =
@@ -21,13 +23,25 @@ function Star({ filled }: { filled: boolean }) {
 }
 
 /** Reusa la forma de estrella de `RatingBadge` (marketplace) -- misma marca, contexto tappable acá. */
-export function StarRatingInput({ value, onChange }: StarRatingInputProps) {
+export function StarRatingInput({ value, onChange, readOnly = false }: StarRatingInputProps) {
+  if (readOnly) {
+    return (
+      <View style={styles.row} accessibilityLabel={`${value} de 5 estrellas`}>
+        {STARS.map((star) => (
+          <View key={star} style={styles.star}>
+            <Star filled={star <= value} />
+          </View>
+        ))}
+      </View>
+    );
+  }
+
   return (
     <View style={styles.row}>
       {STARS.map((star) => (
         <Pressable
           key={star}
-          onPress={() => onChange(star)}
+          onPress={() => onChange?.(star)}
           style={styles.star}
           accessibilityRole="button"
           accessibilityLabel={`${star} estrella${star > 1 ? 's' : ''}`}

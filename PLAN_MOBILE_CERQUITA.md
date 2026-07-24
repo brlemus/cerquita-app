@@ -386,14 +386,6 @@ construible con el backend actual.
   propósito: un link visible sin flujo detrás es UI rota para quien más lo
   necesita. Cuando este flujo exista, el link vuelve tal cual lo
   especifica `assets/brand/README.md` (spec de Login, dirección 8b).
-- **Estado de reseña en `GET /orders/:id`** (gap de contrato, anotado en
-  Fase 6b): el DTO de `Order` no expone si el pedido ya tiene reseña — el
-  cliente lo resuelve con un store local (`reviewedOrdersStore`,
-  `src/features/reviews/`) que marca en éxito y en `409` (ya reseñado).
-  Funciona, pero no es exacto si el mismo pedido se reseña desde otro
-  device. Si el backend suma un campo aditivo (mismo patrón del chore de
-  DTO parity — `businessName`/`catalogCategoryName`), el store pasa de
-  fuente de verdad a cache.
 - **MFA (segundo factor)**: soporte parcial — `email_code` implementado en
   Fase 5 (`SecondFactorScreen`, ver `docs/phases/phase-1-auth.md` y
   `docs/phases/phase-5-tracking.md`); TOTP y otras estrategias sin

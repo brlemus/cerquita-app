@@ -20,7 +20,15 @@ import { OrderStatusStepper } from '../components/OrderStatusStepper';
 import { useCancelOrder } from '../hooks/useCancelOrder';
 import { useOrder } from '../hooks/useOrder';
 import { useOrderStatus } from '../hooks/useOrderStatus';
+import { classifyCancelConflict } from '../utils/classifyCancelConflict';
 import { shortOrderId, statusLabel } from '../utils/orderStatus';
+
+const CANCEL_CONFLICT_MESSAGE: Record<ReturnType<typeof classifyCancelConflict>, string> = {
+  alreadyDelivered: 'Tu pedido ya fue entregado.',
+  alreadyCancelled: 'Tu pedido ya estaba cancelado.',
+  statusChanged: 'El estado de tu pedido cambió. Actualizamos la pantalla.',
+  unknown: 'No pudimos cancelar tu pedido. Actualizamos la pantalla con el estado real.',
+};
 
 /**
  * Fuente de verdad del pedido completo: `useOrder` (una vez). El estado
@@ -84,7 +92,8 @@ export function OrderTrackingScreen() {
           cancelMutation.mutate(undefined, {
             onError: (error) => {
               if (error instanceof ApiRequestError && error.error.kind === 'conflict') {
-                Alert.alert('No se pudo cancelar', 'El negocio ya empezó a preparar tu pedido.');
+                const kind = classifyCancelConflict(error.error.details);
+                Alert.alert('No se pudo cancelar', CANCEL_CONFLICT_MESSAGE[kind]);
               }
             },
           });
@@ -142,7 +151,9 @@ export function OrderTrackingScreen() {
             </View>
           ) : null}
 
-          {effectiveStatus === 'ENTREGADO' ? <OrderReviewCard orderId={order.id} /> : null}
+          {effectiveStatus === 'ENTREGADO' ? (
+            <OrderReviewCard orderId={order.id} review={order.review} />
+          ) : null}
         </ScrollView>
 
         <View style={[styles.footer, { paddingBottom: bottomInset }]}>

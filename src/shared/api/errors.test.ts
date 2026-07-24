@@ -70,6 +70,15 @@ describe('mapError', () => {
     });
   });
 
+  it('un 409 con reason reconocido nunca es reRegisterBlocked, aunque el message matchee el regex de re-registro', () => {
+    const body = {
+      code: 'CONFLICT',
+      message: 'A user with email a@b.com already exists',
+      details: { reason: 'REVIEW_ALREADY_EXISTS', orderId: 'order-1' },
+    };
+    expect(mapError(409, body).kind).toBe('conflict');
+  });
+
   it('maps 400 with array message (ValidationPipe) to validation', () => {
     const body = { statusCode: 400, message: ['line should not be empty'], error: 'Bad Request' };
     expect(mapError(400, body)).toEqual({

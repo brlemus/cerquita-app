@@ -1,5 +1,5 @@
 export { configureAuth, request, requestRaw, type RequestOptions } from './client';
-export { ApiRequestError, mapError, type ApiError } from './errors';
+export { ApiRequestError, getConflictReason, mapError, type ApiError } from './errors';
 export { buildQueryString, type QueryParams } from './queryString';
 export type {
   AuthMeResponse,
@@ -7,6 +7,7 @@ export type {
   DomainErrorBody,
   DomainErrorCode,
   HttpErrorBody,
+  OrderConflictReason,
   PaginatedResponse,
   UserRole,
   UserStatus,

@@ -21,7 +21,7 @@ function createClientAndWrapper() {
   function Wrapper({ children }: { children: ReactNode }) {
     return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
   }
-  return { Wrapper };
+  return { queryClient, Wrapper };
 }
 
 describe('useCreateReview', () => {
@@ -41,7 +41,20 @@ describe('useCreateReview', () => {
     unmount();
   });
 
-  it('en 409 (ya reseñado) también marca el pedido como reseñado', async () => {
+  it('en éxito invalida el detalle y la lista de pedidos', async () => {
+    const { queryClient, Wrapper } = createClientAndWrapper();
+    const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+    mockCreateReview.mockResolvedValueOnce({ id: 'r1', orderId: 'order-1' });
+
+    const { result, unmount } = renderHook(() => useCreateReview('order-1'), { wrapper: Wrapper });
+    await act(() => result.current.mutateAsync({ rating: 5 }));
+
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['orders', 'detail', 'order-1'] });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['orders', 'list'] });
+    unmount();
+  });
+
+  it('en 409 sin reason (backend desactualizado) marca el pedido como reseñado -- fallback legacy', async () => {
     const { Wrapper } = createClientAndWrapper();
     mockCreateReview.mockRejectedValueOnce(
       new ApiRequestError({ kind: 'conflict', status: 409, message: 'x' }),
@@ -51,6 +64,42 @@ describe('useCreateReview', () => {
     await act(() => expect(result.current.mutateAsync({ rating: 5 })).rejects.toThrow());
 
     expect(useReviewedOrdersStore.getState().reviewedIds).toEqual(['order-1']);
+    unmount();
+  });
+
+  it('en 409 REVIEW_ALREADY_EXISTS marca el pedido como reseñado', async () => {
+    const { Wrapper } = createClientAndWrapper();
+    mockCreateReview.mockRejectedValueOnce(
+      new ApiRequestError({
+        kind: 'conflict',
+        status: 409,
+        message: 'Ya existe una reseña para este pedido',
+        details: { reason: 'REVIEW_ALREADY_EXISTS', orderId: 'order-1' },
+      }),
+    );
+
+    const { result, unmount } = renderHook(() => useCreateReview('order-1'), { wrapper: Wrapper });
+    await act(() => expect(result.current.mutateAsync({ rating: 5 })).rejects.toThrow());
+
+    expect(useReviewedOrdersStore.getState().reviewedIds).toEqual(['order-1']);
+    unmount();
+  });
+
+  it('en 409 ORDER_NOT_DELIVERED NO marca el pedido como reseñado', async () => {
+    const { Wrapper } = createClientAndWrapper();
+    mockCreateReview.mockRejectedValueOnce(
+      new ApiRequestError({
+        kind: 'conflict',
+        status: 409,
+        message: 'Order must be ENTREGADO to be reviewed',
+        details: { reason: 'ORDER_NOT_DELIVERED', orderId: 'order-1', status: 'PENDIENTE' },
+      }),
+    );
+
+    const { result, unmount } = renderHook(() => useCreateReview('order-1'), { wrapper: Wrapper });
+    await act(() => expect(result.current.mutateAsync({ rating: 5 })).rejects.toThrow());
+
+    expect(useReviewedOrdersStore.getState().reviewedIds).toEqual([]);
     unmount();
   });
 

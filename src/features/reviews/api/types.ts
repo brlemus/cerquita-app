@@ -17,3 +17,16 @@ export type Review = {
   comment?: string;
   createdAt: string;
 };
+
+/**
+ * Subconjunto de `Review` embebido en `Order` (`GET /orders`,
+ * `GET /orders/:id`) -- mismo shape que `OrderReviewSummaryResponseDto`
+ * del backend, sin `orderId`/`businessId`/`customerId` (redundantes
+ * dentro del propio pedido).
+ */
+export type OrderReviewSummary = {
+  id: string;
+  rating: number;
+  comment?: string;
+  createdAt: string;
+};

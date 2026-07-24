@@ -12,12 +12,13 @@ type ReviewedOrdersActions = {
 };
 
 /**
- * Fuente de verdad local de "ya reseñado" -- el contrato no expone forma de
- * saberlo salvo el 409 al re-postear (docs/API_CONTRACT.md, sección 6). Un
- * 409 real también llama a `markReviewed` como backstop (ver
- * `useCreateReview`). Gap de contrato anotado en `PLAN_MOBILE_CERQUITA.md`
- * (Backlog post-MVP): cuando `GET /orders/:id` sume el estado de reseña,
- * este store pasa de fuente de verdad a cache.
+ * Cache optimista de "ya reseñado" -- la fuente de verdad es `Order.review`
+ * (`GET /orders`/`GET /orders/:id`, `review !== null`, ver
+ * `docs/API_CONTRACT.md` sección 4). Este store solo cubre el instante
+ * entre "el customer califica" y el próximo refetch del pedido, que
+ * todavía no trae el `review` real -- `markReviewed` se llama en éxito y
+ * en el 409 `REVIEW_ALREADY_EXISTS` (backstop, ver `useCreateReview` y
+ * `classifyReviewConflict`).
  */
 export const useReviewedOrdersStore = create<ReviewedOrdersState & ReviewedOrdersActions>()(
   persist(

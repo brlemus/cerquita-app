@@ -1,6 +1,6 @@
 import type { CartLine } from '@/features/cart/store/cartStore';
 import { ApiRequestError } from '@/shared/api';
-import { classifyOrderConflict, extractStockConflictLine } from './classifyOrderConflict';
+import { classifyOrderConflict, extractConflictLine } from './classifyOrderConflict';
 
 export type CheckoutErrorAction = 'goToCart' | 'goToHome' | 'retry';
 
@@ -10,16 +10,24 @@ export type CheckoutErrorView = {
   action: CheckoutErrorAction;
 };
 
-function matchStockLine(
+/**
+ * `PRODUCT_NOT_ACTIVE` reporta solo `productId` aunque la línea tenga
+ * variante (el backend chequea `isActive` antes de resolver la variante) --
+ * a diferencia de stock insuficiente, acá no se exige `!line.variantOptionId`
+ * al matchear por `productId` solo.
+ */
+function matchConflictLine(
   lines: CartLine[],
-  stockLine: { productId?: string; variantOptionId?: string } | undefined,
+  conflictLine: { productId?: string; variantOptionId?: string } | undefined,
 ): CartLine | undefined {
-  if (!stockLine) return undefined;
-  return lines.find((line) =>
-    stockLine.variantOptionId
-      ? line.variantOptionId === stockLine.variantOptionId
-      : line.productId === stockLine.productId && !line.variantOptionId,
-  );
+  if (!conflictLine) return undefined;
+  if (conflictLine.variantOptionId) {
+    return lines.find((line) => line.variantOptionId === conflictLine.variantOptionId);
+  }
+  if (conflictLine.productId) {
+    return lines.find((line) => line.productId === conflictLine.productId);
+  }
+  return undefined;
 }
 
 /**
@@ -44,12 +52,22 @@ export function deriveCheckoutError(error: unknown, lines: CartLine[]): Checkout
     const conflictKind = classifyOrderConflict(apiError.details);
 
     if (conflictKind === 'stockInsufficient') {
-      const matched = matchStockLine(lines, extractStockConflictLine(apiError.details));
+      const matched = matchConflictLine(lines, extractConflictLine(apiError.details));
       const message = matched
         ? `No hay stock suficiente de ${matched.productName}${
             matched.variantOptionName ? ` — ${matched.variantOptionName}` : ''
           }`
         : 'Algunos productos no tienen stock suficiente';
+      return { message, actionLabel: 'Ajustar carrito', action: 'goToCart' };
+    }
+
+    if (conflictKind === 'productInactive') {
+      const matched = matchConflictLine(lines, extractConflictLine(apiError.details));
+      const message = matched
+        ? `${matched.productName}${
+            matched.variantOptionName ? ` — ${matched.variantOptionName}` : ''
+          } ya no está disponible`
+        : 'Uno de los productos de tu carrito ya no está disponible';
       return { message, actionLabel: 'Ajustar carrito', action: 'goToCart' };
     }
 
