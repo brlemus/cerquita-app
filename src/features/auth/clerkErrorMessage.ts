@@ -43,16 +43,35 @@ const FALLBACK = 'Ocurrió un error. Intentá de nuevo.';
 export function getClerkErrorMessage(error: unknown): string {
   if (isClerkAPIResponseError(error)) {
     const code = error.errors[0]?.code;
+    const rawMessage = error.errors[0]?.message;
     if (code && MESSAGES[code]) {
+      if (__DEV__) {
+        console.log(
+          '[auth] getClerkErrorMessage -- rama MAPEADA, código:',
+          code,
+          '-> copy:',
+          MESSAGES[code],
+          '(Clerk dijo:',
+          rawMessage,
+          ')',
+        );
+      }
       return MESSAGES[code];
     }
     if (__DEV__) {
-      console.warn('[auth] Código de error de Clerk sin mapear:', code, error.errors[0]?.message);
+      console.warn(
+        '[auth] getClerkErrorMessage -- rama FALLBACK, código sin mapear:',
+        code,
+        rawMessage,
+      );
     }
     return FALLBACK;
   }
   if (__DEV__) {
-    console.warn('[auth] Error inesperado (no es un ClerkAPIResponseError):', error);
+    console.warn(
+      '[auth] getClerkErrorMessage -- rama FALLBACK, no es ClerkAPIResponseError:',
+      error,
+    );
   }
   return FALLBACK;
 }
@@ -77,10 +96,18 @@ const INCOMPLETE_SIGN_IN_MESSAGES: Record<string, string> = {
 
 export function getIncompleteSignInMessage(status: string | null | undefined): string {
   if (status && INCOMPLETE_SIGN_IN_MESSAGES[status]) {
+    if (__DEV__) {
+      console.log(
+        '[auth] getIncompleteSignInMessage -- rama MAPEADA, status:',
+        status,
+        '-> copy:',
+        INCOMPLETE_SIGN_IN_MESSAGES[status],
+      );
+    }
     return INCOMPLETE_SIGN_IN_MESSAGES[status];
   }
   if (__DEV__) {
-    console.warn('[auth] Sign-in incompleto con status sin mapear:', status);
+    console.warn('[auth] getIncompleteSignInMessage -- rama FALLBACK, status sin mapear:', status);
   }
   return FALLBACK;
 }

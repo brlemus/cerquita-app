@@ -40,6 +40,14 @@ export function SignInScreen() {
         // Estado no soportado en esta fase (ej. MFA — needs_second_factor,
         // backlog post-MVP). Mensaje accionable por status, nunca genérico
         // cuando lo conocemos.
+        if (__DEV__) {
+          console.log('[auth] Sign-in incompleto -- attempt completo:', {
+            status: attempt.status,
+            identifier: attempt.identifier,
+            supportedFirstFactors: attempt.supportedFirstFactors,
+            supportedSecondFactors: attempt.supportedSecondFactors,
+          });
+        }
         setFormError(getIncompleteSignInMessage(attempt.status));
       }
     } catch (error) {
