@@ -3,11 +3,8 @@ import { useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Path } from 'react-native-svg';
 
-import { useLogout } from '@/features/auth/hooks/useLogout';
 import { CartIconButton } from '@/features/cart/components/CartIconButton';
-import { useCartStore } from '@/features/cart/store/cartStore';
 import { PinIcon } from '@/features/checkout/components/icons';
 import { useAddresses } from '@/features/checkout/hooks/useAddresses';
 import { colors, EmptyState, ErrorState, radius, spacing, Text } from '@/shared/ui';
@@ -21,24 +18,8 @@ import { usePlatformCategories } from '../hooks/usePlatformCategories';
 
 const SKELETON_KEYS = ['s0', 's1', 's2', 's3', 's4', 's5'];
 
-function SignOutIcon() {
-  return (
-    <Svg width={18} height={18} viewBox="0 0 18 18">
-      <Path
-        d="M7 2H3.5a1 1 0 00-1 1v12a1 1 0 001 1H7M11.5 12.5L16 8l-4.5-4.5M16 8H6.5"
-        stroke={colors.text.primary}
-        strokeWidth={1.6}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="none"
-      />
-    </Svg>
-  );
-}
-
 export function HomeScreen() {
   const router = useRouter();
-  const logout = useLogout();
   const [categoryId, setCategoryId] = useState<string | null>(null);
 
   const categoriesQuery = usePlatformCategories();
@@ -115,19 +96,6 @@ export function HomeScreen() {
           <Text color="secondary">Buscar negocios</Text>
         </Pressable>
         <CartIconButton />
-        {/* temporal hasta Fase 7 (Profile) -- único punto de logout hasta entonces */}
-        <Pressable
-          onPress={() => {
-            // el carrito es del usuario que sale de sesión -- no debe sobrevivir para el próximo login
-            useCartStore.getState().clearCart();
-            logout();
-          }}
-          style={styles.iconButton}
-          accessibilityRole="button"
-          accessibilityLabel="Cerrar sesión"
-        >
-          <SignOutIcon />
-        </Pressable>
       </View>
 
       {businessesQuery.isPending ? (
@@ -211,14 +179,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface.subtle,
     borderRadius: radius.lg,
     paddingHorizontal: spacing.md,
-  },
-  iconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.md,
-    backgroundColor: colors.surface.subtle,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   listContent: {
     paddingBottom: spacing.xl,
