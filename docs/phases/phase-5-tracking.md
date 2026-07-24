@@ -326,6 +326,60 @@ prompted) => status !== 'granted' && canAskAgain && !prompted` --
   Gate: suite completa (42/42 -- 213/213 tests), lint, typecheck,
   `expo-doctor` 21/21. JS puro. Pendiente: gate de instalación fresca en
   ambas plataformas.
+- **Bug real de auth encontrado durante el gate de push -- toca código
+  de la Fase 1, no de esta fase, pero bloqueaba poder loguear como
+  super-admin para probar.** Cuenta sin ningún factor MFA (verificado
+  contra la Backend API de Clerk) mostraba "verificación en dos pasos,
+  que la app todavía no soporta" en Android primero, y luego en ambas
+  plataformas, sin loguear nada. Diagnóstico en dos pasos (visibilidad
+  primero, según lo pedido):
+  1. Causa de que no logueara nada: `getIncompleteSignInMessage()` solo
+     logueaba en su rama de _fallback_ (status sin mapear) -- una rama
+     _mapeada_ como `needs_second_factor` devolvía el copy sin dejar
+     rastro, por diseño ("ya es un caso conocido"). Logging `__DEV__`
+     agregado a las 4 ramas de `getClerkErrorMessage` y las 2 de
+     `getIncompleteSignInMessage` (mapeada y fallback), más el
+     `attempt` completo (`status`/`identifier`/`supportedFirstFactors`/
+     `supportedSecondFactors`) logueado en `SignInScreen` para
+     cualquier status != `complete`.
+  2. Smoking gun con el logging ya en verde: `supportedSecondFactors`
+     traía `{ strategy: 'email_code', primary: true, safeIdentifier:
+'byron.lemus2202@outlook.com' }` -- NO era el TOTP borrado. Clerk
+     cayó a verificación por email como segundo factor de fallback tras
+     borrar el TOTP original. La app (decisión de la Fase 1.5) rechaza
+     _todo_ `needs_second_factor` como no soportado -- correcto para
+     TOTP, incompleto para `email_code`.
+
+  **Fix bajo el Principio rector** (producto usable, no el atajo de
+  "contactá soporte" para un caso que la app puede resolver sola):
+  `email_code` como segundo factor pasa a estar soportado, reusando el
+  patrón/UI de `VerifyEmailScreen` (código de 6 dígitos, cooldown de
+  reenvío) sobre el recurso `signIn` en vez de `signUp`.
+  - `findEmailCodeSecondFactor(status, supportedSecondFactors)` nuevo
+    (`src/features/auth/`, puro, testeado) -- intercepta
+    `needs_second_factor` con `email_code` disponible antes de que
+    llegue a `getIncompleteSignInMessage`. Verificado contra
+    `@clerk/types` real, no supuesto:
+    `prepareSecondFactor`/`attemptSecondFactor` son métodos estables de
+    `SignInResource` (no la API `__internal_future`, marcada
+    experimental); `EmailCodeSecondFactorConfig`/`EmailCodeAttempt`
+    confirmados con sus shapes exactos.
+  - `SecondFactorScreen` nueva (`app/(auth)/second-factor.tsx`) -- lee
+    `signIn.supportedSecondFactors` directo (recurso vivo compartido de
+    Clerk entre pantallas, sin threadear el email por route params,
+    mismo patrón que `VerifyEmailScreen` con `signUp.emailAddress`).
+    Copy: "Te enviamos un código a X para confirmar tu identidad".
+  - TOTP y el resto de estrategias sin implementar siguen cayendo al
+    copy de "no soportado" existente -- comentario de
+    `getIncompleteSignInMessage` actualizado para reflejar que
+    `needs_second_factor` ya no es un caso 100% no soportado.
+  - Tests de la matriz completa (`email_code` presente/ausente, mezclado
+    con otras estrategias, status distinto de `needs_second_factor`,
+    factores nulos/vacíos).
+
+  Gate: suite completa (43/43 -- 218/218 tests), lint, typecheck,
+  `expo-doctor` 21/21. JS puro -- sin cambios de dependencias ni de
+  config nativa.
 
 ## Context
 

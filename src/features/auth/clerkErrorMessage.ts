@@ -81,10 +81,13 @@ export function getClerkErrorMessage(error: unknown): string {
  * una excepción, es un paso adicional que Clerk pide (`SignInStatus`:
  * 'needs_identifier' | 'needs_first_factor' | 'needs_second_factor' |
  * 'needs_new_password' | 'complete', confirmado contra @clerk/types).
- * La app solo implementa email+password de un factor — MFA es backlog
- * post-MVP (ver docs/phases/phase-1-auth.md). `needs_second_factor` es el
- * único que se vio en la práctica (usuario con MFA enrolado desde el
- * dashboard); el resto son defensivos.
+ * `needs_second_factor` con `email_code` disponible SÍ está soportado --
+ * `SignInScreen` lo intercepta antes con `findEmailCodeSecondFactor` y
+ * navega a `SecondFactorScreen`, nunca llega hasta acá. Este mapeo cubre
+ * el resto: TOTP/backup_code/phone_code/email_link como segundo factor
+ * (`needs_second_factor` sin `email_code` disponible), y
+ * `needs_first_factor`/`needs_new_password` (defensivos, no vistos en la
+ * práctica) -- todos backlog post-MVP (docs/phases/phase-1-auth.md).
  */
 const INCOMPLETE_SIGN_IN_MESSAGES: Record<string, string> = {
   needs_second_factor:
