@@ -16,6 +16,7 @@ const config = {
   orientation: 'portrait',
   scheme: 'cerquita',
   userInterfaceStyle: 'light',
+  icon: './assets/icon.png',
   plugins: [
     'expo-router',
     'expo-font',
@@ -23,10 +24,27 @@ const config = {
     'expo-web-browser',
     'expo-apple-authentication',
     'expo-image',
-    'expo-splash-screen',
+    [
+      'expo-splash-screen',
+      {
+        image: './assets/splash-icon.png',
+        backgroundColor: '#6C4CF1',
+        resizeMode: 'contain',
+        imageWidth: 160,
+      },
+    ],
     '@react-native-firebase/app',
     '@react-native-firebase/messaging',
-    'expo-notifications',
+    // Va antes de expo-notifications a propósito -- los mods de manifest
+    // corren en orden inverso al de registro (ver comentario del plugin).
+    './plugins/withNotificationColorManifestFix',
+    [
+      'expo-notifications',
+      {
+        icon: './assets/notification-icon.png',
+        color: '#6C4CF1',
+      },
+    ],
     './plugins/withFirebaseForegroundPresentation',
     [
       'expo-location',
@@ -61,6 +79,11 @@ const config = {
   android: {
     package: 'sv.cerquita.app',
     googleServicesFile: googleServicesJson,
+    adaptiveIcon: {
+      foregroundImage: './assets/adaptive-icon.png',
+      monochromeImage: './assets/adaptive-icon-monochrome.png',
+      backgroundColor: '#6C4CF1',
+    },
   },
   extra: {
     apiUrl,
