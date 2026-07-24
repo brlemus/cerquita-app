@@ -39,6 +39,13 @@ export const ProductCard = memo(function ProductCard({
         <View style={[styles.image, styles.imageFallback]} />
       )}
       <View style={styles.info}>
+        {product.catalogCategoryName ? (
+          <View style={styles.categoryPill}>
+            <Text variant="caption" color="brand" numberOfLines={1} style={styles.categoryPillText}>
+              {product.catalogCategoryName}
+            </Text>
+          </View>
+        ) : null}
         <Text variant="bodyLg" numberOfLines={1}>
           {product.name}
         </Text>
@@ -81,5 +88,16 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     gap: 2,
+  },
+  categoryPill: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.surface.tint,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    marginBottom: 2,
+  },
+  categoryPillText: {
+    color: colors.brand.dark,
   },
 });

@@ -43,6 +43,8 @@ export type Product = {
   id: string;
   businessId: string;
   catalogCategoryId: string | null;
+  /** Gap de contrato cerrado (Fase 6b) -- opcional por robustez si el backend lo omite. */
+  catalogCategoryName?: string | null;
   name: string;
   description: string | null;
   photoUrl: string | null;

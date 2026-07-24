@@ -1,9 +1,18 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackIcon } from '@/features/marketplace/components/icons';
 import { useBusiness } from '@/features/marketplace/hooks/useBusiness';
+import { OrderReviewCard } from '@/features/reviews/components/OrderReviewCard';
 import { ApiRequestError } from '@/shared/api';
 import { useBottomInset } from '@/shared/hooks';
 import { Button, colors, ErrorState, radius, spacing, Text } from '@/shared/ui';
@@ -18,6 +27,16 @@ import { shortOrderId, statusLabel } from '../utils/orderStatus';
  * mostrado prioriza `useOrderStatus` (polling) sobre lo que trajo
  * `useOrder`, sin escribir el cache a mano -- ver
  * docs/phases/phase-5-tracking.md.
+ *
+ * `ScrollView` + footer envueltos en `KeyboardAvoidingView behavior="padding"`
+ * (header queda afuera, no tiene inputs): mismo mecanismo que ya prueba
+ * `KeyboardAwareScreen` en Login/`AddressFormScreen` -- con edge-to-edge,
+ * `adjustResize` no es confiable en Android (docs/phases/
+ * chore-brand-v2-login-splash.md), `padding` funciona en ambas plataformas.
+ * No se reusa `KeyboardAwareScreen` tal cual porque no tiene slot de footer
+ * y esta pantalla combina header fijo + scroll + footer fijo (cancelar/volver),
+ * nunca simultáneo con la reseña (que solo aparece en `ENTREGADO`, cuando
+ * `canCancel` ya es `false`).
  */
 export function OrderTrackingScreen() {
   const router = useRouter();
@@ -88,44 +107,60 @@ export function OrderTrackingScreen() {
         <Text variant="titleMd">Seguimiento</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={[styles.heroCard, isCancelled && styles.heroCardCancelled]}>
-          <Text variant="bodySm" color={isCancelled ? 'danger' : 'brand'} style={styles.centerText}>
-            {statusLabel(effectiveStatus)}
-          </Text>
-          {!isCancelled && effectiveEta !== undefined ? (
-            <Text variant="titleLg" style={styles.centerText}>
-              ~{effectiveEta} min
+      <KeyboardAvoidingView style={styles.flex} behavior="padding">
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        >
+          <View style={[styles.heroCard, isCancelled && styles.heroCardCancelled]}>
+            <Text
+              variant="bodySm"
+              color={isCancelled ? 'danger' : 'brand'}
+              style={styles.centerText}
+            >
+              {statusLabel(effectiveStatus)}
             </Text>
-          ) : null}
-          <Text variant="bodySm" color={isCancelled ? 'danger' : 'brand'} style={styles.centerText}>
-            Pedido #{shortId}
-            {businessQuery.data ? ` · ${businessQuery.data.name}` : ''}
-          </Text>
-        </View>
-
-        {!isCancelled ? (
-          <View style={styles.stepperSection}>
-            <OrderStatusStepper status={effectiveStatus} />
+            {!isCancelled && effectiveEta !== undefined ? (
+              <Text variant="titleLg" style={styles.centerText}>
+                ~{effectiveEta} min
+              </Text>
+            ) : null}
+            <Text
+              variant="bodySm"
+              color={isCancelled ? 'danger' : 'brand'}
+              style={styles.centerText}
+            >
+              Pedido #{shortId}
+              {businessQuery.data ? ` · ${businessQuery.data.name}` : ''}
+            </Text>
           </View>
-        ) : null}
-      </ScrollView>
 
-      <View style={[styles.footer, { paddingBottom: bottomInset }]}>
-        {canCancel ? (
-          <Pressable
-            onPress={handleCancel}
-            disabled={cancelMutation.isPending}
-            style={styles.cancelButton}
-            accessibilityRole="button"
-          >
-            <Text variant="bodyMd" color="danger">
-              {cancelMutation.isPending ? 'Cancelando…' : 'Cancelar pedido'}
-            </Text>
-          </Pressable>
-        ) : null}
-        <Button title="Volver al inicio" size="lg" onPress={() => router.replace('/')} />
-      </View>
+          {!isCancelled ? (
+            <View style={styles.stepperSection}>
+              <OrderStatusStepper status={effectiveStatus} />
+            </View>
+          ) : null}
+
+          {effectiveStatus === 'ENTREGADO' ? <OrderReviewCard orderId={order.id} /> : null}
+        </ScrollView>
+
+        <View style={[styles.footer, { paddingBottom: bottomInset }]}>
+          {canCancel ? (
+            <Pressable
+              onPress={handleCancel}
+              disabled={cancelMutation.isPending}
+              style={styles.cancelButton}
+              accessibilityRole="button"
+            >
+              <Text variant="bodyMd" color="danger">
+                {cancelMutation.isPending ? 'Cancelando…' : 'Cancelar pedido'}
+              </Text>
+            </Pressable>
+          ) : null}
+          <Button title="Volver al inicio" size="lg" onPress={() => router.replace('/')} />
+        </View>
+      </KeyboardAvoidingView>
     </View>
   );
 }
@@ -134,6 +169,9 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: colors.surface.default,
+  },
+  flex: {
+    flex: 1,
   },
   centered: {
     alignItems: 'center',
