@@ -35,16 +35,6 @@ function AuthConfigurator({ children }: PropsWithChildren) {
 
   useEffect(() => {
     configureAuth(() => getToken());
-
-    // TEMPORAL -- gate manual de push (Checkpoint C2), sacar después.
-    // __DEV__ evita que esto sobreviva a un build de producción incluso
-    // si se olvida quitar. TTL del token: 60s default de Clerk -- copiarlo
-    // de Metro y pegarlo en Swagger enseguida.
-    if (__DEV__) {
-      getToken().then((token) => {
-        console.log('[DEV token]', token);
-      });
-    }
   }, [getToken]);
 
   return <>{children}</>;

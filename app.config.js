@@ -27,6 +27,7 @@ const config = {
     '@react-native-firebase/app',
     '@react-native-firebase/messaging',
     'expo-notifications',
+    './plugins/withFirebaseForegroundPresentation',
     [
       'expo-location',
       {

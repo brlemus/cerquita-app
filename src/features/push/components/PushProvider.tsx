@@ -4,6 +4,7 @@ import messaging from '@react-native-firebase/messaging';
 import { useRouter } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import { useEffect, type PropsWithChildren } from 'react';
+import { Platform } from 'react-native';
 
 import { getDevicePlatform } from '../getDevicePlatform';
 import { getFcmToken } from '../getFcmToken';
@@ -47,9 +48,6 @@ export function PushProvider({ children }: PropsWithChildren) {
           ({ status } = await Notifications.requestPermissionsAsync());
         }
 
-        if (__DEV__) {
-          console.log('[push] registro -- permission status:', status);
-        }
         if (status !== 'granted') {
           return;
         }
@@ -106,14 +104,27 @@ export function PushProvider({ children }: PropsWithChildren) {
       if (!parsed) {
         return;
       }
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: remoteMessage.notification?.title ?? 'Tu pedido cambió de estado',
-          body: remoteMessage.notification?.body,
-          data: remoteMessage.data,
-        },
-        trigger: null,
-      });
+      if (Platform.OS === 'ios') {
+        // iOS presenta la remota sola vía RNFB (delegate de
+        // UNUserNotificationCenter con las opciones de foreground
+        // inyectadas por Info.plist -- plugins/withFirebaseForegroundPresentation.js).
+        // Reprogramarla acá duplicaría el banner.
+        return;
+      }
+      try {
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: remoteMessage.notification?.title ?? 'Tu pedido cambió de estado',
+            body: remoteMessage.notification?.body,
+            data: remoteMessage.data,
+          },
+          trigger: null,
+        });
+      } catch (error) {
+        if (__DEV__) {
+          console.log('[push] onMessage -- scheduleNotificationAsync falló:', error);
+        }
+      }
     });
   }, []);
 
