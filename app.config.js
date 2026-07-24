@@ -27,10 +27,15 @@ const config = {
     [
       'expo-splash-screen',
       {
-        image: './assets/splash-icon.png',
+        // splash-8b (dirección "sticker + ruta") -- pieza full-bleed
+        // 1080x2340, no un glifo chico centrado. `imageWidth` grande a
+        // propósito: `contain` se auto-ajusta al alto real de cada
+        // pantalla, y el fondo #6C4CF1 (igual al del propio arte) hace
+        // invisible cualquier letterbox.
+        image: './assets/splash.png',
         backgroundColor: '#6C4CF1',
         resizeMode: 'contain',
-        imageWidth: 160,
+        imageWidth: 400,
       },
     ],
     '@react-native-firebase/app',
@@ -75,6 +80,16 @@ const config = {
     usesAppleSignIn: true,
     bundleIdentifier: 'sv.cerquita.app',
     googleServicesFile: googleServiceInfoPlist,
+    infoPlist: {
+      // Default estático (rige antes de que JS monte y corra el
+      // StatusBar.setBarStyle de SignInScreen) -- la primera pantalla
+      // real de un usuario deslogueado es el login violeta, no blanca.
+      // UIViewControllerBasedStatusBarAppearance ya está en `false` por
+      // el template base de Expo (confirmado con un prebuild real), así
+      // que esto es el único punto que faltaba para cerrar la ventana
+      // splash-nativo→JS sin íconos oscuros invisibles sobre violeta.
+      UIStatusBarStyle: 'UIStatusBarStyleLightContent',
+    },
   },
   android: {
     package: 'sv.cerquita.app',

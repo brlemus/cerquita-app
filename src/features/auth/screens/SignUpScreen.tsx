@@ -71,6 +71,9 @@ export function SignUpScreen() {
         </View>
       }
     >
+      <Text variant="bodyMd" color="secondary" style={styles.subtitle}>
+        Los negocios cerca de vos te esperan.
+      </Text>
       <Controller
         control={control}
         name="name"
@@ -171,6 +174,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xxl,
     paddingVertical: spacing.md,
     gap: spacing.md,
+  },
+  subtitle: {
+    marginBottom: spacing.sm,
   },
   submit: {
     marginTop: spacing.sm,
