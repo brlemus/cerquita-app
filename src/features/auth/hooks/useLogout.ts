@@ -30,26 +30,53 @@ function delay(ms: number): Promise<'timeout'> {
  * Referencia estable (`useCallback`) -- `AccountGate` la usa como
  * dependencia de un `useEffect` (auto-logout en 401) y necesita el mismo
  * comportamiento que el `signOut` de Clerk, que ya es estable.
+ *
+ * Segunda instancia del unhandled rejection "You are signed out"
+ * (backlog de Fase 5, docs/phases/phase-5-tracking.md): el try/catch de
+ * arriba solo cubría el des-registro de FCM -- `cancelQueries`/`clear`/
+ * `signOut()` quedaban sin protección, y ningún caller (`AccountGate`,
+ * `ProfileScreen`) atrapa la promesa que devuelve `useLogout()` (la usan
+ * fire-and-forget). Si `signOut()` rechaza -- ej. un segundo tap en
+ * "Cerrar sesión" mientras el primer `signOut()` todavía no terminó de
+ * invalidar la sesión -- esa excepción quedaba sin capturar en ningún
+ * lado. `isLoggingOut` es a nivel módulo (no un `useRef`) porque
+ * `useLogout()` se llama desde dos componentes distintos que pueden
+ * disparar un logout casi al mismo tiempo (`AccountGate` por 401 +
+ * tap manual) -- un guard por instancia no alcanzaría.
  */
+let isLoggingOut = false;
+
 export function useLogout() {
   const { signOut } = useAuth();
   const { mutateAsync: unregisterDeviceAsync } = useUnregisterDevice();
   const queryClient = useQueryClient();
 
   return useCallback(async () => {
-    try {
-      const token = await getFcmToken();
-      if (token) {
-        await Promise.race([
-          unregisterDeviceAsync({ fcmToken: token }).catch(() => undefined),
-          delay(UNREGISTER_TIMEOUT_MS),
-        ]);
-      }
-    } catch {
-      // best-effort: nunca bloquea el logout.
+    if (isLoggingOut) {
+      return;
     }
-    await queryClient.cancelQueries();
-    queryClient.clear();
-    await signOut();
+    isLoggingOut = true;
+    try {
+      try {
+        const token = await getFcmToken();
+        if (token) {
+          await Promise.race([
+            unregisterDeviceAsync({ fcmToken: token }).catch(() => undefined),
+            delay(UNREGISTER_TIMEOUT_MS),
+          ]);
+        }
+      } catch {
+        // best-effort: nunca bloquea el logout.
+      }
+      await queryClient.cancelQueries();
+      queryClient.clear();
+      await signOut();
+    } catch (error) {
+      if (__DEV__) {
+        console.log('[auth] logout -- excepción no atrapada por nada más:', error);
+      }
+    } finally {
+      isLoggingOut = false;
+    }
   }, [signOut, unregisterDeviceAsync, queryClient]);
 }
