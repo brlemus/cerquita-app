@@ -24,35 +24,9 @@ export type CreateAddressRequest = {
 
 export type UpdateAddressRequest = Partial<CreateAddressRequest>;
 
-export type OrderStatus = 'PENDIENTE' | 'PREPARANDO' | 'EN_CAMINO' | 'ENTREGADO' | 'CANCELADO';
-
-export type OrderItem = {
-  productId: string;
-  variantOptionId?: string;
-  quantity: number;
-  unitPriceCents: number;
-  productName: string;
-  variantOptionName?: string;
-};
-
-export type Order = {
-  id: string;
-  businessId: string;
-  customerId: string;
-  status: OrderStatus;
-  items: OrderItem[];
-  addressLine: string;
-  addressLat: number;
-  addressLng: number;
-  instructions?: string;
-  subtotalCents: number;
-  deliveryFeeCents: number;
-  commissionCents: number;
-  totalCents: number;
-  etaMinutes?: number;
-  paymentMethod: 'CASH';
-  createdAt: string;
-};
+// `Order`/`OrderStatus`/`OrderItem` viven en `@/features/orders/api/types`
+// desde la Fase 5 -- checkout crea pedidos, `orders` es dueño de
+// leerlos/trackearlos/cancelarlos.
 
 export type CreateOrderItem = {
   productId: string;

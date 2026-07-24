@@ -1,4 +1,3 @@
-import { useAuth } from '@clerk/clerk-expo';
 import { FlashList, type ListRenderItem } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
@@ -6,6 +5,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'reac
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
+import { useLogout } from '@/features/auth/hooks/useLogout';
 import { CartIconButton } from '@/features/cart/components/CartIconButton';
 import { useCartStore } from '@/features/cart/store/cartStore';
 import { PinIcon } from '@/features/checkout/components/icons';
@@ -38,7 +38,7 @@ function SignOutIcon() {
 
 export function HomeScreen() {
   const router = useRouter();
-  const { signOut } = useAuth();
+  const logout = useLogout();
   const [categoryId, setCategoryId] = useState<string | null>(null);
 
   const categoriesQuery = usePlatformCategories();
@@ -120,7 +120,7 @@ export function HomeScreen() {
           onPress={() => {
             // el carrito es del usuario que sale de sesión -- no debe sobrevivir para el próximo login
             useCartStore.getState().clearCart();
-            signOut();
+            logout();
           }}
           style={styles.iconButton}
           accessibilityRole="button"

@@ -2,9 +2,12 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react-nativ
 
 import { CompleteNameScreen } from './CompleteNameScreen';
 
-const mockSignOut = jest.fn();
+const mockLogout = jest.fn();
+jest.mock('../hooks/useLogout', () => ({
+  useLogout: () => mockLogout,
+}));
+
 jest.mock('@clerk/clerk-expo', () => ({
-  useAuth: () => ({ signOut: mockSignOut }),
   isClerkAPIResponseError: (error: unknown) =>
     typeof error === 'object' && error !== null && 'errors' in error,
 }));
@@ -49,6 +52,6 @@ describe('CompleteNameScreen', () => {
 
     fireEvent.press(screen.getByText('Cerrar sesión'));
 
-    expect(mockSignOut).toHaveBeenCalledTimes(1);
+    expect(mockLogout).toHaveBeenCalledTimes(1);
   });
 });

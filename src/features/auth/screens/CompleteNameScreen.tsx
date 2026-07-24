@@ -1,10 +1,10 @@
-import { useAuth } from '@clerk/clerk-expo';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { getClerkErrorMessage } from '../clerkErrorMessage';
+import { useLogout } from '../hooks/useLogout';
 import { completeNameSchema, type CompleteNameFormValues } from '../schemas';
 import { Button, KeyboardAwareScreen, spacing, Text, TextField } from '@/shared/ui';
 
@@ -20,7 +20,7 @@ export type CompleteNameScreenProps = {
  * 400 (kind 'validation').
  */
 export function CompleteNameScreen({ onSubmit }: CompleteNameScreenProps) {
-  const { signOut } = useAuth();
+  const logout = useLogout();
   const [formError, setFormError] = useState<string | null>(null);
   const {
     control,
@@ -80,7 +80,7 @@ export function CompleteNameScreen({ onSubmit }: CompleteNameScreenProps) {
           onPress={handleSubmit(handleSave)}
           style={styles.submit}
         />
-        <Pressable accessibilityRole="button" onPress={() => signOut()} style={styles.signOut}>
+        <Pressable accessibilityRole="button" onPress={() => logout()} style={styles.signOut}>
           <Text variant="bodySm" color="secondary">
             Cerrar sesión
           </Text>

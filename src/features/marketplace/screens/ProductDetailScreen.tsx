@@ -2,9 +2,9 @@ import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useCartStore, wouldReplaceCart } from '@/features/cart/store/cartStore';
+import { useBottomInset } from '@/shared/hooks';
 import { Button, colors, ErrorState, spacing, Stepper, Text } from '@/shared/ui';
 import { formatMoneyCents } from '@/shared/utils';
 import { FloatingBackButton } from '../components/FloatingBackButton';
@@ -27,7 +27,8 @@ export function ProductDetailScreen() {
     productId: string;
   }>();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
+  const scrollBottomInset = useBottomInset(spacing.xxxl + 72);
+  const footerBottomInset = useBottomInset(spacing.xl);
 
   const product = useCachedProduct(businessId, productId);
   const businessQuery = useBusiness(businessId);
@@ -102,7 +103,7 @@ export function ProductDetailScreen() {
       <FloatingBackButton />
       <ScrollView
         contentContainerStyle={{
-          paddingBottom: insets.bottom + spacing.xxxl + 72,
+          paddingBottom: scrollBottomInset,
         }}
       >
         {product.photoUrl ? (
@@ -191,7 +192,7 @@ export function ProductDetailScreen() {
           )}
         </View>
       </ScrollView>
-      <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.xl }]}>
+      <View style={[styles.footer, { paddingBottom: footerBottomInset }]}>
         <Button title={addLabel} onPress={handleAddToCart} disabled={addDisabled} size="lg" />
       </View>
     </View>

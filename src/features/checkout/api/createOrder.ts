@@ -1,5 +1,6 @@
 import { request } from '@/shared/api';
-import type { CreateOrderPayload, Order } from './types';
+import type { Order } from '@/features/orders/api/types';
+import type { CreateOrderPayload } from './types';
 
 export async function createOrder(
   payload: CreateOrderPayload,

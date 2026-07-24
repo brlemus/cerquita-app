@@ -7,6 +7,7 @@ import { ApiRequestError } from '@/shared/api';
 import { Button, colors, spacing, Text } from '@/shared/ui';
 import { saveNameAndRefreshToken } from '../completeNameFlow';
 import { useAuthMe } from '../hooks/useAuthMe';
+import { useLogout } from '../hooks/useLogout';
 import { CompleteNameScreen } from '../screens/CompleteNameScreen';
 import { SuspendedScreen } from '../screens/SuspendedScreen';
 
@@ -19,9 +20,10 @@ import { SuspendedScreen } from '../screens/SuspendedScreen';
  * claim `name` del session token queda vacío y el backend devuelve 400.
  */
 export function AccountGate({ children }: PropsWithChildren) {
-  const { signOut, getToken } = useAuth();
+  const { getToken } = useAuth();
   const { user } = useUser();
   const { data, error, isPending, refetch, isRefetching } = useAuthMe();
+  const logout = useLogout();
 
   const kind = error instanceof ApiRequestError ? error.error.kind : undefined;
   const isUnauthorized = kind === 'unauthorized';
@@ -29,9 +31,9 @@ export function AccountGate({ children }: PropsWithChildren) {
 
   useEffect(() => {
     if (isUnauthorized) {
-      signOut();
+      logout();
     }
-  }, [isUnauthorized, signOut]);
+  }, [isUnauthorized, logout]);
 
   async function handleNameSaved(name: string) {
     if (!user) {

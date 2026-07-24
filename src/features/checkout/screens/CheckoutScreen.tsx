@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { subtotalCents, useCartStore } from '@/features/cart/store/cartStore';
 import { BackIcon } from '@/features/marketplace/components/icons';
 import { useBusiness } from '@/features/marketplace/hooks/useBusiness';
+import { useBottomInset } from '@/shared/hooks';
 import { Button, colors, EmptyState, radius, spacing, Text } from '@/shared/ui';
 import { formatMoneyCents } from '@/shared/utils';
 import { ChevronRightIcon, PinIcon } from '../components/icons';
@@ -24,6 +25,7 @@ import { deriveCheckoutError, type CheckoutErrorAction } from '../utils/deriveCh
 export function CheckoutScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const bottomInset = useBottomInset(spacing.lg);
   const queryClient = useQueryClient();
   const { addressId: addressIdParam } = useLocalSearchParams<{ addressId?: string }>();
 
@@ -236,7 +238,7 @@ export function CheckoutScreen() {
         ) : null}
       </ScrollView>
 
-      <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.lg }]}>
+      <View style={[styles.footer, { paddingBottom: bottomInset }]}>
         <Button
           title={`Confirmar pedido · ${formatMoneyCents(total)}`}
           size="lg"

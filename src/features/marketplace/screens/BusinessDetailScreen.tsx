@@ -2,10 +2,10 @@ import { FlashList, type ListRenderItem } from '@shopify/flash-list';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { itemCount, subtotalCents, useCartStore } from '@/features/cart/store/cartStore';
 import { ApiRequestError } from '@/shared/api';
+import { useBottomInset } from '@/shared/hooks';
 import { colors, EmptyState, ErrorState, radius, Skeleton, spacing, Text } from '@/shared/ui';
 import { formatMoneyCents } from '@/shared/utils';
 import type { Product } from '../api/types';
@@ -26,7 +26,7 @@ const LOGO_SIZE = 72;
 export function BusinessDetailScreen() {
   const { businessId } = useLocalSearchParams<{ businessId: string }>();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
+  const cartBarBottomInset = useBottomInset(spacing.md);
 
   const businessQuery = useBusiness(businessId);
   const productsQuery = useBusinessProducts(businessId);
@@ -163,7 +163,7 @@ export function BusinessDetailScreen() {
       {showCartBar ? (
         <Pressable
           onPress={() => router.push('/cart')}
-          style={[styles.cartBar, { marginBottom: insets.bottom + spacing.md }]}
+          style={[styles.cartBar, { marginBottom: cartBarBottomInset }]}
           accessibilityRole="button"
           accessibilityLabel={`Ver mi carrito, ${itemCount(cartLines)} ítems, ${formatMoneyCents(subtotalCents(cartLines))}`}
         >

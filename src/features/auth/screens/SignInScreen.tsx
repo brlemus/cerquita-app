@@ -1,6 +1,6 @@
 import { useSignIn } from '@clerk/clerk-expo';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { StyleSheet, View, type TextInput } from 'react-native';
@@ -8,10 +8,12 @@ import Svg, { Circle, Path } from 'react-native-svg';
 
 import { getClerkErrorMessage, getIncompleteSignInMessage } from '../clerkErrorMessage';
 import { SocialSignInButtons } from '../components/SocialSignInButtons';
+import { findEmailCodeSecondFactor } from '../findEmailCodeSecondFactor';
 import { signInSchema, type SignInFormValues } from '../schemas';
 import { Button, colors, KeyboardAwareScreen, spacing, Text, TextField } from '@/shared/ui';
 
 export function SignInScreen() {
+  const router = useRouter();
   const { isLoaded, signIn, setActive } = useSignIn();
   const [formError, setFormError] = useState<string | null>(null);
   const passwordRef = useRef<TextInput>(null);
@@ -36,12 +38,32 @@ export function SignInScreen() {
       });
       if (attempt.status === 'complete') {
         await setActive({ session: attempt.createdSessionId });
-      } else {
-        // Estado no soportado en esta fase (ej. MFA — needs_second_factor,
-        // backlog post-MVP). Mensaje accionable por status, nunca genérico
-        // cuando lo conocemos.
-        setFormError(getIncompleteSignInMessage(attempt.status));
+        return;
       }
+
+      if (__DEV__) {
+        console.log('[auth] Sign-in incompleto -- attempt completo:', {
+          status: attempt.status,
+          identifier: attempt.identifier,
+          supportedFirstFactors: attempt.supportedFirstFactors,
+          supportedSecondFactors: attempt.supportedSecondFactors,
+        });
+      }
+
+      const emailFactor = findEmailCodeSecondFactor(attempt.status, attempt.supportedSecondFactors);
+      if (emailFactor) {
+        await signIn.prepareSecondFactor({
+          strategy: 'email_code',
+          emailAddressId: emailFactor.emailAddressId,
+        });
+        router.push('/(auth)/second-factor');
+        return;
+      }
+
+      // Estado no soportado en esta fase (ej. TOTP -- needs_second_factor
+      // sin email_code disponible, backlog post-MVP). Mensaje accionable
+      // por status, nunca genérico cuando lo conocemos.
+      setFormError(getIncompleteSignInMessage(attempt.status));
     } catch (error) {
       setFormError(getClerkErrorMessage(error));
     }
