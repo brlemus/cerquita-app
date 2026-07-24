@@ -381,6 +381,26 @@ prompted) => status !== 'granted' && canAskAgain && !prompted` --
   `expo-doctor` 21/21. JS puro -- sin cambios de dependencias ni de
   config nativa.
 
+- **Gate de iOS post-C2, dos hallazgos reales, ambos resueltos**: (1)
+  carrera de logout (Android, unhandled rejection "You are signed out")
+  -- `useLogout`'s `Promise.race` dejaba huérfana la mutación de
+  unregister-device si perdía contra el timeout, y `client.ts` llamaba
+  `getAuthToken()` fuera de su único try/catch; fix + test con
+  `process.on('unhandledRejection')` real. (2) foreground iOS no
+  presentaba banner -- ver "Diagnóstico y fix — foreground iOS no
+  presenta banner" más abajo para la causa raíz completa (conflicto de
+  `UNUserNotificationCenterDelegate` entre RNFB messaging y
+  expo-notifications) y el fix (`plugins/withFirebaseForegroundPresentation.js`
+  - gate `Platform.OS` en `onMessage`). Aceptación en ambas plataformas:
+    PASÓ.
+- **Cierre de fase**: instrumentación de diagnóstico retirada (botón
+  `TEST`, logs `[push]` de éxito/entrada, log `[DEV token]`) -- quedan
+  solo los logs de error con valor permanente. Segunda instancia del
+  mismo síntoma de unhandled rejection encontrada en el gate de cierre,
+  desde un call site distinto -- explícitamente fuera de alcance,
+  documentada en "Backlog — fuera de esta fase" para sesión aparte.
+  Gate final pendiente de reportar (typecheck + lint + suite completa).
+
 ## Context
 
 El carrito y el checkout (Fase 4) terminan en `OrderConfirmationScreen`
@@ -1188,6 +1208,80 @@ C (Android) esté en verde.**
 - **Fuera de esta fase**: historial de pedidos (Fase 6) — pero ya deja
   `useOrder`/`useOrderStatus` en `src/features/orders/` listos para
   reusar ahí.
+
+## Diagnóstico y fix — foreground iOS no presenta banner
+
+- **Síntoma**: con la app abierta en iOS, `expo-notifications` consulta
+  el handler (`handleNotification`, tanto para la remota como para la
+  local re-agendada en `onMessage`), devuelve `shouldShowBanner/List/
+Sound: true`, `scheduleNotificationAsync` resuelve OK — pero no se
+  presenta ningún banner. Intermitente al reinstalar: los primeros 2
+  intentos sí presentaban, los siguientes no (ventana de carrera, ver
+  causa). Android sin problema en ningún caso.
+- **Causa raíz (confirmada contra el código instalado, no contra docs
+  genéricas)**: `UNUserNotificationCenter.delegate` es un slot único.
+  `@react-native-firebase/messaging` (`RNFBMessaging+UNUserNotification
+Center.m`, `observe`) lo toma sin condición (`center.delegate = self`),
+  encadenando el delegate anterior si había uno. `expo-notifications`
+  (`NotificationCenterManager.swift`, `init()`) al revés: si el slot ya
+  está tomado, cede y NUNCA llega a ser el delegate real — solo queda
+  registrado en la lista interna que sí dispara el JS `handleNotification`
+  (por eso el log aparecía igual). El `willPresentNotification` de RNFB
+  calcula sus propias `presentationOptions` desde una clave estática
+  (`messaging_ios_foreground_presentation_options`, leída de
+  `firebase_json_raw` en Info.plist vía `RNFBJSON.m`), reenvía al delegate
+  encadenado (expo-notifications, async porque cruza el bridge de JS) y
+  **sin esperar esa respuesta**, llama `completionHandler` de una con sus
+  propias opciones. Sin `firebase.json` esa clave resuelve a `[]` →
+  opciones vacías → como `completionHandler` es de un solo uso, la
+  respuesta (correcta, pero más lenta) de expo-notifications llega tarde
+  y no hace nada.
+- **Por qué `firebase.json` no alcanza bajo Expo prebuild**: el mecanismo
+  real que traduce `firebase.json` a `firebase_json_raw` es un Run Script
+  de Xcode (`node_modules/@react-native-firebase/app/ios_config.sh`) que
+  se instala vía CocoaPods en un proyecto RN bare — el plugin de Expo de
+  `@react-native-firebase/app` (v25.1.0, instalada) no lo replica. Un
+  `firebase.json` en la raíz del repo sería ignorado en el build de EAS.
+- **Fix**: `plugins/withFirebaseForegroundPresentation.js`, config plugin
+  propio con `withInfoPlist` que fija `firebase_json_raw` directo
+  (JSON `{"messaging_ios_foreground_presentation_options":
+["banner","list","sound"]}`, base64 — mismo formato que `RNFBJSON.m`
+  decodifica, verificado). Registrado en `app.config.js` después de
+  `@react-native-firebase/messaging`. Verificado con
+  `expo config --type introspect --json`: la clave queda inyectada y
+  decodifica al valor esperado antes de gastar un rebuild nativo en
+  probarlo a ciegas.
+- **`PushProvider.tsx`, `onMessage`**: con la remota presentándose sola
+  en iOS (vía RNFB, ya con opciones correctas), reagendarla como local
+  duplicaría el banner — gate `Platform.OS === 'ios'` que corta el
+  `scheduleNotificationAsync` en ese caso (Android sigue igual, sin
+  cambios).
+- **Aceptación: PASÓ en ambas plataformas.** iOS: 5 pushes seguidas con
+  banner las 5 veces, foreground, sostenido tras cerrar y relanzar la
+  app (descarta que dependiera de la ventana de carrera del delegate).
+  Android: foreground y background sin regresión.
+- **Cierre**: el botón `TEST` (`HomeScreen.tsx`), los logs `[push]` de
+  diagnóstico (`handleNotification` consultado/devuelve en `index.js`,
+  `onMessage`/schedule y el volcado completo de permisos en
+  `PushProvider.tsx`) y el log `[DEV token]` de `app/_layout.tsx` ya se
+  retiraron. Quedan solo los logs `[push]` de error con valor
+  permanente (`registerDevice falló`, `registro -- excepción`,
+  `scheduleNotificationAsync falló`), consistentes con el resto de la
+  fase.
+
+## Backlog — fuera de esta fase
+
+- **Unhandled rejection "You are signed out" (Android), segunda
+  instancia**: durante el gate de cierre apareció OTRA vez el mismo
+  síntoma que el bug de carrera de logout ya resuelto en esta fase
+  (`useLogout.ts` + `client.ts`, ver commits del checkpoint de push) —
+  pero desde un call site huérfano distinto dentro de `baseFetch`
+  (`requestRaw`/`request` en `src/shared/api/client.ts`), no cubierto
+  por ese fix. Diagnóstico y fix quedan para una sesión aparte
+  (explícitamente fuera de alcance del cierre de Fase 5, pedido del
+  usuario). Mismo tratamiento esperado: visibilidad primero, evidencia,
+  después el fix — no asumir que es el mismo call site que la vez
+  anterior.
 
 ## Notas de git / permisos
 
