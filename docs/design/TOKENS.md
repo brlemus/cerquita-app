@@ -15,44 +15,52 @@ Donde un valor del prototipo no entra limpio en la escala, se indica.
 ## Color
 
 ### Marca (primario)
-| Token | Hex | Uso en el prototipo |
-|---|---|---|
-| `color.brand.default` | `#6C4CF1` | CTA primario, links, ícono de marca |
-| `color.brand.pressed` | `#573BD1` | hover/pressed de links y CTAs |
-| `color.brand.dark` | `#3B2A9E` | texto/ícono sobre `brand.tint`, énfasis fuerte |
-| `color.brand.tint` | `#EDE9FC` | fondo de íconos con acento de marca (chips, avatares de categoría) |
-| `color.brand.tintStrong` | `#C3B8F0` | variante más saturada de `tint`, uso puntual |
-| `color.brand.soft` | `#8A6FF4` | variante clara del primario, uso puntual |
+
+| Token                    | Hex       | Uso en el prototipo                                                                                                                             |
+| ------------------------ | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `color.brand.default`    | `#6C4CF1` | CTA primario, links, ícono de marca                                                                                                             |
+| `color.brand.pressed`    | `#573BD1` | hover/pressed de links y CTAs                                                                                                                   |
+| `color.brand.dark`       | `#3B2A9E` | texto/ícono sobre `brand.tint`, énfasis fuerte                                                                                                  |
+| `color.brand.tint`       | `#EDE9FC` | fondo de íconos con acento de marca (chips, avatares de categoría)                                                                              |
+| `color.brand.tintStrong` | `#C3B8F0` | variante más saturada de `tint`, uso puntual                                                                                                    |
+| `color.brand.soft`       | `#8A6FF4` | variante clara del primario; también ruta punteada de marca (handoff 8b traía `#8A70F5`, a 1 unidad de diferencia — mismo token, no se duplica) |
+| `color.brand.shadow`     | `#4A32A8` | sombra plana (sin blur) bajo elementos de marca — badge, pastilla del sticker, botón primario del login (dirección 8b)                          |
 
 ### Superficie y fondo
-| Token | Hex | Uso |
-|---|---|---|
-| `color.surface.default` | `#FFFFFF` | tarjetas, inputs, hojas |
-| `color.surface.subtle` | `#F7F7F7` | fondo de pantalla (checkout, listas) |
-| `color.surface.warm` | `#F4F1EE` | fondo de login/register (contenedor exterior) |
-| `color.surface.mutedAlt` | `#F1F1F1` / `#F0F0F0` | variantes puntuales de fondo gris — consolidar en `surface.subtle` salvo que un componente necesite distinguirse |
+
+| Token                    | Hex                   | Uso                                                                                                                                            |
+| ------------------------ | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `color.surface.default`  | `#FFFFFF`             | tarjetas, inputs, hojas                                                                                                                        |
+| `color.surface.subtle`   | `#F7F7F7`             | fondo de pantalla (checkout, listas)                                                                                                           |
+| `color.surface.warm`     | `#F4F1EE`             | fondo de login/register (contenedor exterior)                                                                                                  |
+| `color.surface.mutedAlt` | `#F1F1F1` / `#F0F0F0` | variantes puntuales de fondo gris — consolidar en `surface.subtle` salvo que un componente necesite distinguirse                               |
+| `color.surface.tint`     | `#F4F2FB`             | fondo de inputs/campos con acento de marca (login, dirección 8b) — distinto de `brand.tint` (ese es para íconos, no para campos de formulario) |
 
 ### Texto
-| Token | Hex | Uso |
-|---|---|---|
-| `color.text.primary` | `#241C19` | texto principal |
+
+| Token                  | Hex       | Uso                                      |
+| ---------------------- | --------- | ---------------------------------------- |
+| `color.text.primary`   | `#241C19` | texto principal                          |
 | `color.text.secondary` | `#9A9A9A` | texto secundario, placeholders, metadata |
-| `color.text.onBrand` | `#FFFFFF` | texto sobre fondo de marca |
+| `color.text.onBrand`   | `#FFFFFF` | texto sobre fondo de marca               |
 
 ### Bordes / separadores
-| Token | Hex | Uso |
-|---|---|---|
-| `color.border.default` | `#EEEEEE` | bordes de cards/inputs |
-| `color.border.strong` | `#DDDDDD` / `#C9C9C9` | bordes con más contraste (inputs enfocados sin usar color de marca, dividers) |
+
+| Token                  | Hex                   | Uso                                                                           |
+| ---------------------- | --------------------- | ----------------------------------------------------------------------------- |
+| `color.border.default` | `#EEEEEE`             | bordes de cards/inputs                                                        |
+| `color.border.strong`  | `#DDDDDD` / `#C9C9C9` | bordes con más contraste (inputs enfocados sin usar color de marca, dividers) |
 
 ### Estado / semántico
-| Token | Hex | Uso |
-|---|---|---|
-| `color.success.default` | `#2F7D48` | texto/ícono de éxito (ej. "Entregado") |
-| `color.success.bg` | `#E7F1E9` / `#EAF0EA` | fondo de badge de éxito |
-| `color.danger.default` | `#D14343` | error, cancelar, destructivo |
+
+| Token                   | Hex                   | Uso                                    |
+| ----------------------- | --------------------- | -------------------------------------- |
+| `color.success.default` | `#2F7D48`             | texto/ícono de éxito (ej. "Entregado") |
+| `color.success.bg`      | `#E7F1E9` / `#EAF0EA` | fondo de badge de éxito                |
+| `color.danger.default`  | `#D14343`             | error, cancelar, destructivo           |
 
 ### Overlays (rgba, no hex — para glass/scrims del prototipo iOS)
+
 - `rgba(0,0,0,.04..20)` — sombras y scrims sutiles sobre superficie clara.
 - `rgba(255,255,255,.18..92)` — glass/blur sobre imágenes o headers con foto.
 
@@ -62,42 +70,48 @@ RN**, el propio SO ya lo provee.
 
 ## Tipografía
 
-Familia: **Inter** (400, 500, 600, 700) vía Google Fonts en el prototipo.
+Familia: **Inter** (400, 500, 600, 700, 800) vía Google Fonts en el
+prototipo — el 800 (ExtraBold) se suma con el handoff de marca 8b (login,
+splash), no estaba en el scan original.
 En RN: `expo-font` + `@expo-google-fonts/inter` (o embebida como asset),
 nunca cargada por link externo.
 
 Escala observada (11–28px) consolidada en una escala de tipo con nombres
 semánticos:
 
-| Token | px | Peso dominante | Uso |
-|---|---|---|---|
-| `type.caption` | 11 | 600 | metadata mínima (badges pequeños) |
-| `type.footnote` | 12 | 600 | labels de campo, metadata secundaria |
-| `type.body.sm` | 13 | 600 | texto secundario de cards |
-| `type.body.md` | 14 | 600 | texto de cuerpo estándar |
-| `type.body.lg` | 15 | 600 | texto de cuerpo destacado, items de lista |
-| `type.subtitle` | 16–17 | 600/700 | subtítulos de sección |
-| `type.title.sm` | 18 | 700 | títulos de card/modal |
-| `type.title.md` | 20–22 | 700 | headers de pantalla |
-| `type.title.lg` | 24–26 | 700 | totales, montos destacados |
-| `type.display` | 28 | 700 | pantallas de bienvenida/estado vacío |
+| Token                 | px    | Peso dominante | Uso                                                                                                                                |
+| --------------------- | ----- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `type.caption`        | 11    | 600            | metadata mínima (badges pequeños)                                                                                                  |
+| `type.footnote`       | 12    | 600            | labels de campo, metadata secundaria                                                                                               |
+| `type.body.sm`        | 13    | 600            | texto secundario de cards                                                                                                          |
+| `type.body.md`        | 14    | 600            | texto de cuerpo estándar                                                                                                           |
+| `type.body.lg`        | 15    | 600            | texto de cuerpo destacado, items de lista                                                                                          |
+| `type.subtitle`       | 16–17 | 600/700        | subtítulos de sección                                                                                                              |
+| `type.title.sm`       | 18    | 700            | títulos de card/modal                                                                                                              |
+| `type.title.md`       | 20–22 | 700            | headers de pantalla                                                                                                                |
+| `type.title.lg`       | 24–26 | 700            | totales, montos destacados                                                                                                         |
+| `type.title.lg.heavy` | 24    | 800            | saludo/hero del login (dirección 8b) — mismo tamaño que `title.lg`, peso más marcado; `title.lg` (700) sigue igual donde ya se usa |
+| `type.display`        | 28    | 700            | pantallas de bienvenida/estado vacío                                                                                               |
 
 Pesos: el prototipo usa casi exclusivamente **600 y 700** (133 y 72
 ocurrencias respectivamente) — la UI es "bold-first", casi no hay 400/500.
-El theme de RN debe default a 600 para texto de cuerpo, no 400.
+El theme de RN debe default a 600 para texto de cuerpo, no 400. El handoff
+de marca 8b (login, splash, sticker) suma **800** como tercer peso, puntual
+para momentos de marca (saludo, wordmark, CTA) — no reemplaza el 700 en el
+resto de la UI.
 
 ## Radios
 
 Consolidados en una escala de 5 pasos (el prototipo tenía 15 valores
 puntuales entre 4 y 24px, más `9999` para pills):
 
-| Token | px | Uso |
-|---|---|---|
-| `radius.sm` | 8 | chips pequeños, inputs compactos |
-| `radius.md` | 12 | inputs, botones secundarios |
-| `radius.lg` | 14 | cards estándar (el valor más frecuente, 35 ocurrencias) |
-| `radius.xl` | 16–18 | cards grandes, hojas (bottom sheets), modales |
-| `radius.full` | 9999 | pills, avatares, badges circulares |
+| Token         | px    | Uso                                                     |
+| ------------- | ----- | ------------------------------------------------------- |
+| `radius.sm`   | 8     | chips pequeños, inputs compactos                        |
+| `radius.md`   | 12    | inputs, botones secundarios                             |
+| `radius.lg`   | 14    | cards estándar (el valor más frecuente, 35 ocurrencias) |
+| `radius.xl`   | 16–18 | cards grandes, hojas (bottom sheets), modales           |
+| `radius.full` | 9999  | pills, avatares, badges circulares                      |
 
 ## Espaciado
 

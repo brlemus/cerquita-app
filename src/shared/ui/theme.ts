@@ -11,12 +11,14 @@ export const colors = {
     tint: '#EDE9FC',
     tintStrong: '#C3B8F0',
     soft: '#8A6FF4',
+    shadow: '#4A32A8',
   },
   surface: {
     default: '#FFFFFF',
     subtle: '#F7F7F7',
     warm: '#F4F1EE',
     mutedAlt: '#F1F1F1',
+    tint: '#F4F2FB',
   },
   text: {
     primary: '#241C19',
@@ -42,13 +44,14 @@ export const overlay = {
   light: (opacity: number) => `rgba(255, 255, 255, ${opacity})`,
 } as const;
 
-type FontWeight = '400' | '500' | '600' | '700';
+type FontWeight = '400' | '500' | '600' | '700' | '800';
 
 const fontFamily: Record<FontWeight, string> = {
   '400': 'Inter_400Regular',
   '500': 'Inter_500Medium',
   '600': 'Inter_600SemiBold',
   '700': 'Inter_700Bold',
+  '800': 'Inter_800ExtraBold',
 };
 
 type TypeVariant = {
@@ -81,6 +84,9 @@ export const typography = {
   titleSm: typeVariant(18, '700'),
   titleMd: typeVariant(20, '700'),
   titleLg: typeVariant(24, '700'),
+  // Mismo tamaño que titleLg, peso 800 -- momentos de marca puntuales
+  // (saludo del login, dirección 8b), no reemplaza titleLg donde ya se usa.
+  titleLgHeavy: typeVariant(24, '800'),
   display: typeVariant(28, '700'),
 } as const;
 

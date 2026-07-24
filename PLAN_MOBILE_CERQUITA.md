@@ -272,6 +272,12 @@ construible con el backend actual.
 - Banner promocional en Home (prototipo) — requiere un modelo de
   promociones (tabla + endpoint) que hoy no existe en el contrato.
 - Multi-negocio por pedido.
+- **Flujo de recuperación de contraseña** (Clerk reset por código) +
+  restaurar el link "¿Olvidaste tu contraseña?" en el login — el rediseño
+  de marca v2 (`docs/phases/chore-brand-v2-login-splash.md`) lo omitió a
+  propósito: un link visible sin flujo detrás es UI rota para quien más lo
+  necesita. Cuando este flujo exista, el link vuelve tal cual lo
+  especifica `assets/brand/README.md` (spec de Login, dirección 8b).
 - Lo que quede fuera de alcance de las fases 0-9 según se vaya
   descubriendo durante el desarrollo.
 

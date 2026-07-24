@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1080" width="1080" height="1080"><rect width="1080" height="1080" fill="#6C4CF1"></rect><path d="M 250 190 C 460 230, 760 300, 790 495" fill="none" stroke="#8A70F5" stroke-width="11" stroke-linecap="round" stroke-dasharray="1 32"></path><g transform="translate(220 440)">
+<g transform="rotate(-5 320 160)">
+  <rect x="167" y="107" width="420" height="142" rx="71" fill="#4A32A8"></rect>
+  <rect x="150" y="90" width="420" height="142" rx="71" fill="#FFFFFF"></rect>
+  <text x="255" y="184" font-size="64" letter-spacing="-1.28" fill="#6C4CF1">cerquıta</text>
+  <g transform="translate(438 121) scale(2.35)"><path d="M 0 8 C -3.5 3.5 -5 1.5 -5 -1 A 5 5 0 1 1 5 -1 C 5 1.5 3.5 3.5 0 8 Z" fill="#6C4CF1"></path></g>
+  <g transform="rotate(8 116 161)">
+    <rect x="59" y="104" width="138" height="138" rx="42" fill="#4A32A8"></rect>
+    <rect x="47" y="92" width="138" height="138" rx="42" fill="#6C4CF1" stroke="#FFFFFF" stroke-width="10"></rect>
+    <g transform="translate(57 102) scale(1.18)">
+      <g transform="translate(34 52) rotate(7)">
+        <path d="M -10.5 11 L -10.5 -3 L 0 -11.5 L 10.5 -3 L 10.5 11 Z" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"></path>
+        <circle cx="0" cy="3.5" r="4" fill="#FFFFFF"></circle>
+      </g>
+      <g transform="translate(67 49) rotate(-9)">
+        <path d="M 0 15 C -7 6.5 -10.5 2 -10.5 -3 A 10.5 10.5 0 1 1 10.5 -3 C 10.5 2 7 6.5 0 15 Z" fill="none" stroke="#FFFFFF" stroke-width="8.5" stroke-linejoin="round" stroke-linecap="round"></path>
+      </g>
+    </g>
+  </g>
+</g></g></svg>

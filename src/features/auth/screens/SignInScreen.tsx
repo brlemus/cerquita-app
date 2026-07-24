@@ -1,16 +1,17 @@
 import { useSignIn } from '@clerk/clerk-expo';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Link, useRouter } from 'expo-router';
-import { useRef, useState } from 'react';
+import { Link, useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { StyleSheet, View, type TextInput } from 'react-native';
-import Svg, { Circle, Path } from 'react-native-svg';
+import { Platform, StatusBar, StyleSheet, View, type TextInput } from 'react-native';
 
 import { getClerkErrorMessage, getIncompleteSignInMessage } from '../clerkErrorMessage';
+import { LoginHeader } from '../components/LoginHeader';
+import { LoginPrimaryButton } from '../components/LoginPrimaryButton';
 import { SocialSignInButtons } from '../components/SocialSignInButtons';
 import { findEmailCodeSecondFactor } from '../findEmailCodeSecondFactor';
 import { signInSchema, type SignInFormValues } from '../schemas';
-import { Button, colors, KeyboardAwareScreen, spacing, Text, TextField } from '@/shared/ui';
+import { colors, KeyboardAwareScreen, spacing, Text, TextField } from '@/shared/ui';
 
 export function SignInScreen() {
   const router = useRouter();
@@ -26,6 +27,16 @@ export function SignInScreen() {
     defaultValues: { email: '', password: '' },
   });
 
+  // El header violeta llega hasta atrás de la status bar (edges={['bottom']}
+  // más abajo) -- iconos oscuros por default quedarían invisibles ahí.
+  // Se revierte solo al desenfocar (vuelve a la próxima pantalla, blanca).
+  useFocusEffect(
+    useCallback(() => {
+      StatusBar.setBarStyle('light-content');
+      return () => StatusBar.setBarStyle('dark-content');
+    }, []),
+  );
+
   async function onSubmit(values: SignInFormValues) {
     if (!isLoaded) {
       return;
@@ -36,18 +47,26 @@ export function SignInScreen() {
         identifier: values.email,
         password: values.password,
       });
-      if (attempt.status === 'complete') {
-        await setActive({ session: attempt.createdSessionId });
-        return;
-      }
 
       if (__DEV__) {
-        console.log('[auth] Sign-in incompleto -- attempt completo:', {
+        // Investigación en curso (docs/phases/chore-brand-v2-login-splash.md):
+        // el mismo usuario recibe needs_second_factor en Android pero no
+        // en iOS. Incondicional a propósito -- antes solo se logueaba en
+        // la rama "incompleto", así que el caso real de iOS (resuelve
+        // directo a `complete`) nunca se veía; con esto se compara qué
+        // devuelve el servidor en cada plataforma para el mismo intento.
+        console.log('[auth] signIn.create() -- attempt tras password:', {
+          platform: Platform.OS,
           status: attempt.status,
           identifier: attempt.identifier,
           supportedFirstFactors: attempt.supportedFirstFactors,
           supportedSecondFactors: attempt.supportedSecondFactors,
         });
+      }
+
+      if (attempt.status === 'complete') {
+        await setActive({ session: attempt.createdSessionId });
+        return;
       }
 
       const emailFactor = findEmailCodeSecondFactor(attempt.status, attempt.supportedSecondFactors);
@@ -70,131 +89,136 @@ export function SignInScreen() {
   }
 
   return (
-    <KeyboardAwareScreen contentContainerStyle={styles.content}>
-      <View style={styles.header}>
-        <View style={styles.brandTile}>
-          <Svg width={36} height={36} viewBox="0 0 24 24" fill="none">
-            <Path
-              d="M12 21s-7-5.5-7-11a7 7 0 0114 0c0 5.5-7 11-7 11z"
-              stroke="#fff"
-              strokeWidth={2}
-              strokeLinejoin="round"
-            />
-            <Circle cx={12} cy={10} r={2.4} fill="#fff" />
-          </Svg>
-        </View>
-        <Text variant="display">Cerquita</Text>
-        <Text variant="bodyMd" color="secondary" style={styles.subtitle}>
-          Iniciá sesión para entrar a tu cuenta.
+    <KeyboardAwareScreen edges={['bottom']}>
+      {/* Adentro del scroll, no en el slot `header` -- a propósito: un
+          header FIJO de 280px afuera del ScrollView no deja lugar para el
+          teclado en Android (bug real de gate visual). Acá puede
+          desplazarse como el resto del contenido cuando hace falta. */}
+      <LoginHeader />
+      <View style={styles.sheet}>
+        <Text variant="titleLgHeavy">¡Hola de nuevo!</Text>
+        <Text variant="bodyMd" style={styles.subtitle}>
+          Todo lo que querés, cerquita.
         </Text>
-      </View>
 
-      <View style={styles.form}>
-        <Controller
-          control={control}
-          name="email"
-          render={({ field: { value, onChange, onBlur } }) => (
-            <TextField
-              label="Email"
-              placeholder="tu@correo.com"
-              autoCapitalize="none"
-              autoComplete="email"
-              textContentType="emailAddress"
-              keyboardType="email-address"
-              returnKeyType="next"
-              submitBehavior="submit"
-              onSubmitEditing={() => passwordRef.current?.focus()}
-              value={value}
-              onChangeText={onChange}
-              onBlur={onBlur}
-              error={errors.email?.message}
-            />
-          )}
-        />
-        <Controller
-          control={control}
-          name="password"
-          render={({ field: { value, onChange, onBlur } }) => (
-            <TextField
-              ref={passwordRef}
-              label="Contraseña"
-              placeholder="Tu contraseña"
-              secureTextEntry
-              autoComplete="password"
-              textContentType="password"
-              returnKeyType="done"
-              submitBehavior="blurAndSubmit"
-              value={value}
-              onChangeText={onChange}
-              onBlur={onBlur}
-              error={errors.password?.message}
-            />
-          )}
-        />
+        <View style={styles.form}>
+          <Controller
+            control={control}
+            name="email"
+            render={({ field: { value, onChange, onBlur } }) => (
+              <TextField
+                variant="filled"
+                label="Email"
+                placeholder="tu@correo.com"
+                autoCapitalize="none"
+                autoComplete="email"
+                textContentType="emailAddress"
+                keyboardType="email-address"
+                returnKeyType="next"
+                submitBehavior="submit"
+                onSubmitEditing={() => passwordRef.current?.focus()}
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                error={errors.email?.message}
+              />
+            )}
+          />
+          <Controller
+            control={control}
+            name="password"
+            render={({ field: { value, onChange, onBlur } }) => (
+              <TextField
+                variant="filled"
+                ref={passwordRef}
+                label="Contraseña"
+                placeholder="Tu contraseña"
+                secureTextEntry
+                autoComplete="password"
+                textContentType="password"
+                returnKeyType="done"
+                submitBehavior="blurAndSubmit"
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                error={errors.password?.message}
+              />
+            )}
+          />
+        </View>
+
         {formError ? (
-          <Text variant="bodySm" color="danger">
+          <Text variant="bodySm" color="danger" style={styles.formError}>
             {formError}
           </Text>
         ) : null}
-        <Button
+
+        <LoginPrimaryButton
           title="Iniciar sesión"
-          size="lg"
           loading={isSubmitting}
           onPress={handleSubmit(onSubmit)}
           style={styles.submit}
         />
-      </View>
 
-      <SocialSignInButtons onError={setFormError} />
+        <SocialSignInButtons onError={setFormError} />
 
-      <Link href="/(auth)/sign-up" style={styles.footer}>
-        <Text variant="bodyMd" color="secondary" style={styles.footerText}>
-          ¿No tenés cuenta?{' '}
-          <Text variant="bodyMd" color="brand">
-            Crear cuenta
+        <Link href="/(auth)/sign-up" style={styles.footer}>
+          <Text variant="bodyMd" color="secondary" style={styles.footerText}>
+            ¿No tenés cuenta?{' '}
+            <Text variant="bodyMd" color="brand">
+              Crear cuenta
+            </Text>
           </Text>
-        </Text>
-      </Link>
+        </Link>
+      </View>
     </KeyboardAwareScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
+  sheet: {
+    // Sin flex:1 -- ahora vive adentro del ScrollView (ver arriba), se
+    // dimensiona por contenido como cualquier otro hijo. El fondo blanco
+    // coincide con el de la pantalla (KeyboardAwareScreen), así que un
+    // resto corto en pantallas altas no se nota.
+    //
+    // Bug real de gate visual: `sheet` arrancaba justo donde termina
+    // `LoginHeader`, sin superposición -- el recorte de la esquina
+    // redondeada no tenía violeta detrás para revelar (blanco de la
+    // curva sobre blanco del fondo de pantalla), invisible aunque el
+    // radio se aplicara bien. `marginTop` negativo (= al radio) hace que
+    // `sheet` pise los últimos 32px del header violeta, así la curva
+    // corta contra violeta de verdad. `paddingTop` ya era 32 (spacing.xxxl)
+    // -- se cancela con el margen, el contenido (saludo, inputs) no se
+    // corre ni un pixel, solo el fondo/curva "sube" a superponerse.
+    marginTop: -spacing.xxxl,
+    backgroundColor: colors.surface.default,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    paddingTop: spacing.xxxl,
     paddingHorizontal: spacing.xxl,
-  },
-  header: {
-    paddingTop: spacing.xxxl * 3,
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  brandTile: {
-    width: 76,
-    height: 76,
-    borderRadius: 22,
-    backgroundColor: colors.brand.default,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: colors.brand.default,
-    shadowOpacity: 0.34,
-    shadowRadius: 28,
-    shadowOffset: { width: 0, height: 12 },
-    elevation: 8,
+    paddingBottom: spacing.xxxl,
   },
   subtitle: {
-    textAlign: 'center',
-    maxWidth: 250,
-  },
-  form: {
-    marginTop: spacing.xxxl,
-    gap: spacing.md,
-  },
-  submit: {
     marginTop: spacing.xs,
   },
+  form: {
+    // 26px del spec -- no está en la escala de spacing del theme (mismo
+    // criterio ya usado en TextField para el padding de 14px).
+    marginTop: 26,
+    gap: spacing.lg,
+  },
+  formError: {
+    marginTop: spacing.sm,
+  },
+  submit: {
+    marginTop: spacing.xxl,
+  },
   footer: {
-    marginTop: 'auto',
-    paddingBottom: spacing.xxxl + spacing.sm,
+    // Ya no `marginTop: 'auto'` -- sin flex:1 en `sheet` no hay espacio
+    // sobrante que consumir (ver nota de `sheet`). Separación fija,
+    // mismo ritmo que el resto del form.
+    marginTop: spacing.xxl,
   },
   footerText: {
     textAlign: 'center',
