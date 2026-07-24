@@ -1,8 +1,7 @@
 import { memo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { ChevronRightIcon } from '@/features/checkout/components/icons';
-import { colors, spacing, Text } from '@/shared/ui';
+import { ChevronRightIcon, colors, spacing, Text } from '@/shared/ui';
 import { formatMoneyCents, formatOrderDate } from '@/shared/utils';
 import type { Order } from '../api/types';
 import { shortOrderId } from '../utils/orderStatus';

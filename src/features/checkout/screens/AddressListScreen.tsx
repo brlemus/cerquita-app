@@ -6,15 +6,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackIcon } from '@/features/marketplace/components/icons';
 import {
   Button,
+  ChevronRightIcon,
   colors,
   EmptyState,
   ErrorState,
+  PinIcon,
   radius,
   Skeleton,
   spacing,
   Text,
 } from '@/shared/ui';
-import { ChevronRightIcon, PinIcon } from '../components/icons';
 import type { Address } from '../api/types';
 import { useAddresses } from '../hooks/useAddresses';
 

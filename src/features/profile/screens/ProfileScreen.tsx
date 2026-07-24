@@ -1,11 +1,13 @@
 import { useUser } from '@clerk/clerk-expo';
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useLogout } from '@/features/auth/hooks/useLogout';
 import { useCartStore } from '@/features/cart/store/cartStore';
-import { colors, radius, spacing, Text } from '@/shared/ui';
+import { colors, PinIcon, radius, spacing, Text } from '@/shared/ui';
+import { ChatIcon } from '../components/icons';
+import { SettingsRow } from '../components/SettingsRow';
 
 export function ProfileScreen() {
   const router = useRouter();
@@ -24,42 +26,51 @@ export function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
-      <Text variant="titleMd" style={styles.header}>
+      <Text variant="titleLg" style={styles.header}>
         Perfil
       </Text>
-      <View style={styles.content}>
-        <View style={styles.avatar}>
-          <Text variant="titleLg" color="brand">
-            {initial}
-          </Text>
+      <ScrollView contentContainerStyle={styles.content}>
+        <View style={styles.identity}>
+          <View style={styles.avatar}>
+            <Text variant="titleMd" color="brand">
+              {initial}
+            </Text>
+          </View>
+          <View style={styles.identityText}>
+            <Text variant="titleSm">{name}</Text>
+            {email ? (
+              <Text variant="bodySm" color="secondary">
+                {email}
+              </Text>
+            ) : null}
+          </View>
         </View>
-        <Text variant="titleSm" style={styles.centerText}>
-          {name}
-        </Text>
-        {email ? (
-          <Text variant="bodyMd" color="secondary" style={styles.centerText}>
-            {email}
-          </Text>
-        ) : null}
-        <Pressable
-          onPress={() => router.push('/feedback')}
-          style={styles.actionRow}
-          accessibilityRole="button"
-          accessibilityLabel="Enviar comentarios"
-        >
-          <Text variant="bodyMd">Enviar comentarios</Text>
-        </Pressable>
+
+        <View style={styles.card}>
+          <SettingsRow
+            icon={<PinIcon color={colors.text.primary} />}
+            label="Mis direcciones"
+            onPress={() => router.push('/addresses')}
+          />
+          <SettingsRow
+            icon={<ChatIcon />}
+            label="Enviar comentarios"
+            onPress={() => router.push('/feedback')}
+            divider={false}
+          />
+        </View>
+
         <Pressable
           onPress={handleLogout}
           style={styles.logoutButton}
           accessibilityRole="button"
           accessibilityLabel="Cerrar sesión"
         >
-          <Text variant="bodyMd" color="danger">
+          <Text variant="bodyLg" color="secondary">
             Cerrar sesión
           </Text>
         </Pressable>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -70,38 +81,42 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface.default,
   },
   header: {
-    paddingHorizontal: spacing.screenPadding,
-    paddingBottom: spacing.lg,
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.sm,
   },
   content: {
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.xxl,
+  },
+  identity: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: spacing.xxl,
-    gap: spacing.xs,
+    gap: 14,
+    paddingVertical: spacing.lg,
   },
   avatar: {
-    width: 72,
-    height: 72,
+    width: 60,
+    height: 60,
     borderRadius: radius.full,
     backgroundColor: colors.brand.tint,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.md,
   },
-  centerText: {
-    textAlign: 'center',
+  identityText: {
+    gap: 2,
   },
-  actionRow: {
-    marginTop: spacing.xxl,
-    minHeight: 44,
-    paddingHorizontal: spacing.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
+  card: {
+    borderWidth: 1,
+    borderColor: colors.border.default,
+    borderRadius: radius.xl,
+    overflow: 'hidden',
+    backgroundColor: colors.surface.default,
   },
   logoutButton: {
     marginTop: spacing.md,
     minHeight: 44,
+    paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     alignItems: 'center',
-    justifyContent: 'center',
   },
 });

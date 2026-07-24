@@ -1,8 +1,7 @@
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
-import { colors, radius, spacing, Text } from '@/shared/ui';
+import { colors, PinIcon, radius, spacing, Text } from '@/shared/ui';
 import type { UseAddressLocationResult } from '../hooks/useAddressLocation';
-import { PinIcon } from './icons';
 
 export type LocationCaptureCardProps = {
   location: UseAddressLocationResult;
