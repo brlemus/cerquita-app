@@ -1,36 +1,21 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import { useCartStore } from '@/features/cart/store/cartStore';
-import { HomeScreen } from './HomeScreen';
+import { ProfileScreen } from './ProfileScreen';
 
 const mockLogout = jest.fn();
 jest.mock('@/features/auth/hooks/useLogout', () => ({
   useLogout: () => mockLogout,
 }));
 
-jest.mock('expo-router', () => ({
-  useRouter: () => ({ push: jest.fn() }),
-}));
+const mockUser = {
+  fullName: 'Ana Torres',
+  firstName: 'Ana',
+  primaryEmailAddress: { emailAddress: 'ana@example.com' },
+};
 
-jest.mock('../hooks/usePlatformCategories', () => ({
-  usePlatformCategories: () => ({ data: [] }),
-}));
-
-jest.mock('../hooks/useBusinesses', () => ({
-  useBusinesses: () => ({
-    data: { pages: [] },
-    isPending: false,
-    isError: false,
-    isRefetching: false,
-    isFetchingNextPage: false,
-    hasNextPage: false,
-    fetchNextPage: jest.fn(),
-    refetch: jest.fn(),
-  }),
-}));
-
-jest.mock('@/features/checkout/hooks/useAddresses', () => ({
-  useAddresses: () => ({ data: { data: [] } }),
+jest.mock('@clerk/clerk-expo', () => ({
+  useUser: () => ({ user: mockUser }),
 }));
 
 jest.mock('@react-native-async-storage/async-storage', () =>
@@ -38,23 +23,30 @@ jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
 
-describe('HomeScreen -- logout limpia el carrito', () => {
+describe('ProfileScreen', () => {
   beforeEach(() => {
     useCartStore.getState().clearCart();
     mockLogout.mockClear();
   });
 
-  it('cerrar sesión invoca clearCart() además de logout()', async () => {
+  it('muestra el nombre y el email del usuario', () => {
+    render(<ProfileScreen />);
+
+    expect(screen.getByText('Ana Torres')).toBeTruthy();
+    expect(screen.getByText('ana@example.com')).toBeTruthy();
+  });
+
+  it('cerrar sesión limpia el carrito además de invocar logout()', () => {
     useCartStore.getState().addLine('b1', 'Paletería Lili', {
       productId: 'p1',
-      productName: 'Paleta de sobrilla',
+      productName: 'Paleta de sombrilla',
       photoUrl: null,
       unitPriceCents: 65,
       quantity: 2,
     });
     expect(useCartStore.getState().lines).toHaveLength(1);
 
-    await render(<HomeScreen />);
+    render(<ProfileScreen />);
     fireEvent.press(screen.getByLabelText('Cerrar sesión'));
 
     expect(useCartStore.getState().lines).toEqual([]);

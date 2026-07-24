@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useBusiness } from '@/features/marketplace/hooks/useBusiness';
 import { useOrder } from '@/features/orders/hooks/useOrder';
+import { shortOrderId } from '@/features/orders/utils/orderStatus';
 import { useBottomInset } from '@/shared/hooks';
 import { Button, colors, ErrorState, radius, spacing, Text } from '@/shared/ui';
 import { formatMoneyCents } from '@/shared/utils';
@@ -38,7 +39,7 @@ export function OrderConfirmationScreen() {
   }
 
   const order = orderQuery.data;
-  const shortId = order.id.replace(/-/g, '').slice(-6).toUpperCase();
+  const shortId = shortOrderId(order.id);
 
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>

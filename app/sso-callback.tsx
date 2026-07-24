@@ -16,5 +16,5 @@ export default function SsoCallback() {
     return null;
   }
 
-  return <Redirect href={isSignedIn ? '/(app)' : '/(auth)/sign-in'} />;
+  return <Redirect href={isSignedIn ? '/' : '/(auth)/sign-in'} />;
 }
