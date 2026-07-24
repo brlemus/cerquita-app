@@ -83,6 +83,16 @@ export function ProfileScreen() {
             Cerrar sesión
           </Text>
         </Pressable>
+        <Pressable
+          onPress={() => router.push('/delete-account')}
+          style={styles.deleteAccountButton}
+          accessibilityRole="button"
+          accessibilityLabel="Eliminar mi cuenta"
+        >
+          <Text variant="bodyLg" color="danger">
+            Eliminar mi cuenta
+          </Text>
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
@@ -127,6 +137,12 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     marginTop: spacing.md,
+    minHeight: 44,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    alignItems: 'center',
+  },
+  deleteAccountButton: {
     minHeight: 44,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,

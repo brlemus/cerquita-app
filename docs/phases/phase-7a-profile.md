@@ -1,6 +1,6 @@
 # Fase 7a — Perfil real
 
-**Estado**: Planificada, no iniciada.
+**Estado**: Implementada, gate de cierre en verde. Pendiente: PR + merge.
 
 ## Contexto
 
@@ -357,4 +357,42 @@ src/features/auth --silent` → 15 suites/77 tests OK. `pnpm exec tsc
   - Gate: `pnpm exec jest src/features/profile --silent` → 2 suites/7
     tests OK. `pnpm exec tsc --noEmit` → limpio (tras regenerar typed
     routes).
-- [ ] C4 — Borrado de cuenta
+- [x] **C4 — Borrado de cuenta.** Cerrado.
+  - `useDeleteAccount.ts` (nuevo), modelado sobre `useLogout.ts` con el
+    mismo guard de concurrencia a nivel módulo (irreversible: no alcanza
+    con estado de React). Orden verificado por test: `DELETE /devices`
+    (best-effort) → `cancelQueries()` → `user.delete()` → limpieza local
+    (`clearCart`, `clearReviewed`, `queryClient.clear()`, borra la clave de
+    permiso de push) → `signOut()` en su propio try/catch.
+  - `DeleteAccountScreen.tsx` + ruta `app/(app)/delete-account.tsx`: texto
+    llano de consecuencias, link a `/privacy`, CTA destructivo (rojo,
+    Pressable local — `Button` compartido no tiene variante destructiva y
+    no vale la pena agregarla para un solo caso) detrás de un
+    `Alert.alert` de confirmación (mismo patrón que borrar dirección en
+    Fase 4). Estado bloqueado si `deleteSelfEnabled === false` (no se dio
+    en runtime — dashboard de Clerk lo tiene habilitado, ver gate visual).
+  - Fila "Eliminar mi cuenta" (roja, `text` suelto sin caja) agregada
+    debajo de "Cerrar sesión" en `ProfileScreen.tsx`.
+  - **Fix real encontrado en el camino**: `PERMISSION_REQUEST_ATTEMPTED_KEY`
+    vivía en `PushProvider.tsx`, que importa
+    `@react-native-firebase/messaging` — cualquier import de esa constante
+    arrastraba el módulo nativo entero (rompía el test suite: "Native
+    module RNFBAppModule not found"). Se movió a
+    `src/features/push/permissionRequestKey.ts` propio; `PushProvider`
+    ahora importa desde ahí. Sin esto, ningún consumidor fuera de
+    `features/push` podía tocar esa constante en tests.
+  - Tests nuevos: `useDeleteAccount.test.tsx` (6 casos: `canDelete` refleja
+    `deleteSelfEnabled`, orden cancelQueries→delete→signOut, limpieza de
+    carrito/reseñas, fallo de FCM no bloquea, error de Clerk se expone sin
+    romper la promesa, guard de concurrencia con dos invocaciones
+    paralelas).
+  - **Nota de implementación real**: mismo caso que `/privacy` en C3 —
+    `.expo/types/router.d.ts` no tenía `/delete-account` hasta regenerar
+    con `expo start` (~20s en background, killeado después).
+  - `PLAN_MOBILE_CERQUITA.md` — Fase 7 partida en fila "7a — Perfil real"
+    (Construida) y "7b — Recuperación de contraseña" (pendiente).
+    `docs/phases/STATUS-AUDIT.md` actualizado igual.
+  - **Gate de cierre de fase**: `pnpm exec jest --silent` → **54 suites,
+    270 tests, 0 fallos**. `pnpm exec tsc --noEmit` → limpio. `pnpm lint`
+    → 0 errores, 2 warnings preexistentes de C2 (`react-hooks/exhaustive-deps`
+    sobre el mock de `useFocusEffect` en tests, no en código de producción).
