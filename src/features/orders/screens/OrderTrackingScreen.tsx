@@ -11,11 +11,11 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackIcon } from '@/features/marketplace/components/icons';
-import { useBusiness } from '@/features/marketplace/hooks/useBusiness';
 import { OrderReviewCard } from '@/features/reviews/components/OrderReviewCard';
 import { ApiRequestError } from '@/shared/api';
 import { useBottomInset } from '@/shared/hooks';
-import { Button, colors, ErrorState, radius, spacing, Text } from '@/shared/ui';
+import { Button, colors, ErrorState, PressableOpacity, radius, spacing, Text } from '@/shared/ui';
+import { OrderDetailCard } from '../components/OrderDetailCard';
 import { OrderStatusStepper } from '../components/OrderStatusStepper';
 import { useCancelOrder } from '../hooks/useCancelOrder';
 import { useOrder } from '../hooks/useOrder';
@@ -57,7 +57,6 @@ export function OrderTrackingScreen() {
   const cancelMutation = useCancelOrder(orderId);
 
   const order = orderQuery.data;
-  const businessQuery = useBusiness(order?.businessId ?? null);
 
   const effectiveStatus = statusQuery.data?.status ?? order?.status;
   const effectiveEta = statusQuery.data?.etaMinutes ?? order?.etaMinutes;
@@ -141,7 +140,7 @@ export function OrderTrackingScreen() {
               style={styles.centerText}
             >
               Pedido #{shortId}
-              {businessQuery.data ? ` · ${businessQuery.data.name}` : ''}
+              {order.businessName ? ` · ${order.businessName}` : ''}
             </Text>
           </View>
 
@@ -151,6 +150,8 @@ export function OrderTrackingScreen() {
             </View>
           ) : null}
 
+          <OrderDetailCard order={order} />
+
           {effectiveStatus === 'ENTREGADO' ? (
             <OrderReviewCard orderId={order.id} review={order.review} />
           ) : null}
@@ -158,7 +159,7 @@ export function OrderTrackingScreen() {
 
         <View style={[styles.footer, { paddingBottom: bottomInset }]}>
           {canCancel ? (
-            <Pressable
+            <PressableOpacity
               onPress={handleCancel}
               disabled={cancelMutation.isPending}
               style={styles.cancelButton}
@@ -167,7 +168,7 @@ export function OrderTrackingScreen() {
               <Text variant="bodyMd" color="danger">
                 {cancelMutation.isPending ? 'Cancelando…' : 'Cancelar pedido'}
               </Text>
-            </Pressable>
+            </PressableOpacity>
           ) : null}
           <Button title="Volver al inicio" size="lg" onPress={() => router.replace('/')} />
         </View>

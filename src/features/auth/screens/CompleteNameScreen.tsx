@@ -1,12 +1,19 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { getClerkErrorMessage } from '../clerkErrorMessage';
 import { useLogout } from '../hooks/useLogout';
 import { completeNameSchema, type CompleteNameFormValues } from '../schemas';
-import { Button, KeyboardAwareScreen, spacing, Text, TextField } from '@/shared/ui';
+import {
+  Button,
+  KeyboardAwareScreen,
+  PressableOpacity,
+  spacing,
+  Text,
+  TextField,
+} from '@/shared/ui';
 
 export type CompleteNameScreenProps = {
   onSubmit: (name: string) => Promise<void>;
@@ -80,11 +87,15 @@ export function CompleteNameScreen({ onSubmit }: CompleteNameScreenProps) {
           onPress={handleSubmit(handleSave)}
           style={styles.submit}
         />
-        <Pressable accessibilityRole="button" onPress={() => logout()} style={styles.signOut}>
+        <PressableOpacity
+          accessibilityRole="button"
+          onPress={() => logout()}
+          style={styles.signOut}
+        >
           <Text variant="bodySm" color="secondary">
             Cerrar sesión
           </Text>
-        </Pressable>
+        </PressableOpacity>
       </View>
     </KeyboardAwareScreen>
   );

@@ -3,6 +3,7 @@ export { EmptyState, type EmptyStateProps } from './EmptyState';
 export { ErrorState, type ErrorStateProps } from './ErrorState';
 export { PinIcon, ChevronRightIcon } from './icons';
 export { KeyboardAwareScreen, type KeyboardAwareScreenProps } from './KeyboardAwareScreen';
+export { PressableOpacity, type PressableOpacityProps } from './PressableOpacity';
 export { QuickAddButton, type QuickAddButtonProps } from './QuickAddButton';
 export { Skeleton, type SkeletonProps } from './Skeleton';
 export { Stepper, type StepperProps } from './Stepper';

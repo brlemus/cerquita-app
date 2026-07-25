@@ -1,11 +1,11 @@
 import { useUser } from '@clerk/clerk-expo';
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useLogout } from '@/features/auth/hooks/useLogout';
 import { useCartStore } from '@/features/cart/store/cartStore';
-import { colors, PinIcon, radius, spacing, Text } from '@/shared/ui';
+import { colors, PinIcon, PressableOpacity, radius, spacing, Text } from '@/shared/ui';
 import { ChatIcon, GearIcon, ShieldIcon } from '../components/icons';
 import { SettingsRow } from '../components/SettingsRow';
 import { useNotificationPermission } from '../hooks/useNotificationPermission';
@@ -73,7 +73,7 @@ export function ProfileScreen() {
           />
         </View>
 
-        <Pressable
+        <PressableOpacity
           onPress={handleLogout}
           style={styles.logoutButton}
           accessibilityRole="button"
@@ -82,8 +82,8 @@ export function ProfileScreen() {
           <Text variant="bodyLg" color="secondary">
             Cerrar sesión
           </Text>
-        </Pressable>
-        <Pressable
+        </PressableOpacity>
+        <PressableOpacity
           onPress={() => router.push('/delete-account')}
           style={styles.deleteAccountButton}
           accessibilityRole="button"
@@ -92,7 +92,7 @@ export function ProfileScreen() {
           <Text variant="bodyLg" color="danger">
             Eliminar mi cuenta
           </Text>
-        </Pressable>
+        </PressableOpacity>
       </ScrollView>
     </SafeAreaView>
   );

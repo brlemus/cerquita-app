@@ -1,12 +1,13 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useBusiness } from '@/features/marketplace/hooks/useBusiness';
+import { OrderInfoRow } from '@/features/orders/components/OrderInfoRow';
 import { useOrder } from '@/features/orders/hooks/useOrder';
 import { shortOrderId } from '@/features/orders/utils/orderStatus';
 import { useBottomInset } from '@/shared/hooks';
-import { Button, colors, ErrorState, radius, spacing, Text } from '@/shared/ui';
+import { Button, colors, ErrorState, PressableOpacity, radius, spacing, Text } from '@/shared/ui';
 import { formatMoneyCents } from '@/shared/utils';
 
 /**
@@ -55,20 +56,24 @@ export function OrderConfirmationScreen() {
         </Text>
 
         <View style={styles.card}>
-          {businessQuery.data ? <Row label="Negocio" value={businessQuery.data.name} /> : null}
-          <Row label="Dirección" value={order.addressLine} />
-          {order.instructions ? <Row label="Instrucciones" value={order.instructions} /> : null}
-          <Row label="Pago" value="Efectivo contra entrega" />
+          {businessQuery.data ? (
+            <OrderInfoRow label="Negocio" value={businessQuery.data.name} />
+          ) : null}
+          <OrderInfoRow label="Dirección" value={order.addressLine} />
+          {order.instructions ? (
+            <OrderInfoRow label="Instrucciones" value={order.instructions} />
+          ) : null}
+          <OrderInfoRow label="Pago" value="Efectivo contra entrega" />
           {order.etaMinutes !== undefined ? (
-            <Row label="Tiempo estimado" value={`~${order.etaMinutes} min`} />
+            <OrderInfoRow label="Tiempo estimado" value={`~${order.etaMinutes} min`} />
           ) : null}
           <View style={styles.divider} />
-          <Row label="Total" value={formatMoneyCents(order.totalCents)} emphasized />
+          <OrderInfoRow label="Total" value={formatMoneyCents(order.totalCents)} emphasized />
         </View>
       </View>
 
       <View style={[styles.footer, { paddingBottom: bottomInset }]}>
-        <Pressable
+        <PressableOpacity
           onPress={() => router.push(`/orders/${order.id}`)}
           accessibilityRole="button"
           style={styles.trackLink}
@@ -76,21 +81,10 @@ export function OrderConfirmationScreen() {
           <Text variant="bodySm" color="brand">
             Ver seguimiento ›
           </Text>
-        </Pressable>
+        </PressableOpacity>
         <Button title="Volver al inicio" size="lg" onPress={() => router.replace('/')} />
       </View>
     </SafeAreaView>
-  );
-}
-
-function Row({ label, value, emphasized }: { label: string; value: string; emphasized?: boolean }) {
-  return (
-    <View style={styles.row}>
-      <Text variant="bodyMd" color="secondary">
-        {label}
-      </Text>
-      <Text variant={emphasized ? 'subtitle' : 'bodyMd'}>{value}</Text>
-    </View>
   );
 }
 
@@ -128,11 +122,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.xl,
     padding: spacing.lg,
     gap: spacing.sm,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: spacing.md,
   },
   divider: {
     height: 1,
