@@ -1,9 +1,10 @@
-# API Contract — Cerquita (customer app)
+# API Contract — Cerquita (customer app + fundaciones del modo owner)
 
 Destilado de `../cerquita-api` (NestJS, en producción) el 2026-07-21,
 limitado a lo que consume la **app customer**. El backend ya está fijado:
-esta app se adapta a él, nunca al revés. Owner/admin queda fuera —
-ver `CLAUDE.md`.
+esta app se adapta a él, nunca al revés. Owner/admin queda fuera de este
+documento salvo lo mínimo que la Fase 10 (modo owner, ver `CLAUDE.md` y
+`docs/phases/phase-10-owner-foundations.md`) ya consume — sección 8.
 
 Actualizado el 2026-07-24 contra `cerquita-api` PR #16
 (`chore/order-review-state-409-reasons`, merge `6e6a656`): `details.reason`
@@ -530,6 +531,48 @@ reseña para este pedido"` (**en español**, a diferencia de todos los
 
 **Response 201**: `{id, userId, category?, text, createdAt}`.
 **Errores**: `400` (texto vacío/largo, categoría inválida).
+
+---
+
+## 8. Business (owner)
+
+Sección mínima — solo lo que la Fase 10 (fundaciones del modo owner,
+`docs/phases/phase-10-owner-foundations.md`) consume. El resto del
+contrato de owner (pedidos, catálogo, uploads) se documenta cuando las
+fases correspondientes (11+) lo consuman.
+
+### `GET /business/me`
+
+Rol `BUSINESS_OWNER` estricto (`ClerkAuthGuard` + `RolesGuard` +
+`TenantGuard`, `@Roles(BUSINESS_OWNER)`).
+
+**Response 200**
+
+```ts
+{
+  id: string;
+  ownerId: string;
+  platformCategoryId: string;
+  name: string;
+  logoUrl: string | null;
+  status: 'PENDING' | 'ACTIVE' | 'HIDDEN';
+  isOpen: boolean;
+  deliveryFeeCents: number;
+  minOrderCents: number;
+  prepTimeMinutes: number;
+  lat: number | null;
+  lng: number | null;
+  createdAt: string; // ISO
+  updatedAt: string; // ISO
+}
+```
+
+**Errores**: `401` (sin sesión); `403` tanto si el rol no es
+`BUSINESS_OWNER` como si lo es pero no tiene negocio asociado
+(`TenantGuard`, mensaje "User has no associated business" — el rol y el
+negocio pueden desincronizarse porque `PATCH /platform/users/:id/role`
+no valida coherencia entre ambos; la app trata cualquiera de los dos 403
+igual: sin acceso al modo owner, ver Decisión 1 de la Fase 10).
 
 ---
 
