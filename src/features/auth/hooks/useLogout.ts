@@ -2,6 +2,8 @@ import { useAuth } from '@clerk/clerk-expo';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
+import { useCartStore } from '@/features/cart/store/cartStore';
+import { useAppModeStore } from '@/features/owner/store/appModeStore';
 import { getFcmToken } from '@/features/push/getFcmToken';
 import { useUnregisterDevice } from '@/features/push/hooks/useUnregisterDevice';
 
@@ -26,6 +28,14 @@ function delay(ms: number): Promise<'timeout'> {
  * activa (ej. el polling de `useOrderStatus`) para que no quede un fetch
  * en vuelo que llame `getToken()` recién después de que la sesión ya se
  * cerró, y limpia del cache los datos autenticados al instante.
+ *
+ * `clearCart`/`clearMode` centralizados acá (Decisión 4, Fase 10,
+ * docs/phases/phase-10-owner-foundations.md): con el chooser y el perfil
+ * owner suma dos puntos de logout más al de Perfil cliente -- dejar la
+ * limpieza en cada pantalla garantiza el bug "cerré sesión desde otro
+ * lado y me quedó el carrito/modo del usuario anterior". `queryClient.clear()`
+ * no toca AsyncStorage, así que estos dos stores persistidos necesitan su
+ * propia limpieza explícita.
  *
  * Referencia estable (`useCallback`) -- `AccountGate` la usa como
  * dependencia de un `useEffect` (auto-logout en 401) y necesita el mismo
@@ -70,6 +80,8 @@ export function useLogout() {
       }
       await queryClient.cancelQueries();
       queryClient.clear();
+      useCartStore.getState().clearCart();
+      useAppModeStore.getState().clearMode();
       await signOut();
     } catch (error) {
       if (__DEV__) {

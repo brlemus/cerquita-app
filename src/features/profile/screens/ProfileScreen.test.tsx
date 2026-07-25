@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import * as Notifications from 'expo-notifications';
 import type { ReactNode } from 'react';
 
-import { useCartStore } from '@/features/cart/store/cartStore';
+import { useAuthMe } from '@/features/auth/hooks/useAuthMe';
 import { ProfileScreen } from './ProfileScreen';
 
 const mockLogout = jest.fn();
@@ -20,6 +20,11 @@ const mockUser = {
 jest.mock('@clerk/clerk-expo', () => ({
   useUser: () => ({ user: mockUser }),
 }));
+
+// useOwnerAccess envuelve useAuthMe -- mockeado acá para no depender de la
+// query real (misma estrategia que AccountGate.test.tsx).
+jest.mock('@/features/auth/hooks/useAuthMe');
+const mockUseAuthMe = useAuthMe as jest.Mock;
 
 jest.mock('@react-native-async-storage/async-storage', () =>
   // eslint-disable-next-line @typescript-eslint/no-require-imports -- jest.mock factory se hoistea, no puede referenciar un import de módulo externo
@@ -57,9 +62,9 @@ function renderProfileScreen() {
 
 describe('ProfileScreen', () => {
   beforeEach(() => {
-    useCartStore.getState().clearCart();
     mockLogout.mockClear();
     mockGetPermissions.mockResolvedValue({ status: 'granted', canAskAgain: true });
+    mockUseAuthMe.mockReturnValue({ data: { role: 'CUSTOMER', businessId: null } });
   });
 
   it('muestra el nombre y el email del usuario', () => {
@@ -69,21 +74,24 @@ describe('ProfileScreen', () => {
     expect(screen.getByText('ana@example.com')).toBeTruthy();
   });
 
-  it('cerrar sesión limpia el carrito además de invocar logout()', () => {
-    useCartStore.getState().addLine('b1', 'Paletería Lili', {
-      productId: 'p1',
-      productName: 'Paleta de sombrilla',
-      photoUrl: null,
-      unitPriceCents: 65,
-      quantity: 2,
-    });
-    expect(useCartStore.getState().lines).toHaveLength(1);
-
+  it('cerrar sesión invoca logout() -- la limpieza de carrito/modo vive en useLogout', () => {
     renderProfileScreen();
     fireEvent.press(screen.getByLabelText('Cerrar sesión'));
 
-    expect(useCartStore.getState().lines).toEqual([]);
-    expect(useCartStore.getState().businessId).toBeNull();
     expect(mockLogout).toHaveBeenCalledTimes(1);
+  });
+
+  it('sin negocio: no muestra la fila de cambio de modo', () => {
+    renderProfileScreen();
+
+    expect(screen.queryByText('Cambiar a administrar mi tienda')).toBeNull();
+  });
+
+  it('con negocio: muestra la fila de cambio de modo', () => {
+    mockUseAuthMe.mockReturnValue({ data: { role: 'BUSINESS_OWNER', businessId: 'biz-1' } });
+
+    renderProfileScreen();
+
+    expect(screen.getByText('Cambiar a administrar mi tienda')).toBeTruthy();
   });
 });

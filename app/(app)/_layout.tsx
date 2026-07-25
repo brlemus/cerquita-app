@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { StatusBar } from 'react-native';
 
 import { AccountGate } from '@/features/auth/components/AccountGate';
+import { ModeGate } from '@/features/owner/components/ModeGate';
 
 export default function AppLayout() {
   const { isLoaded, isSignedIn } = useAuth();
@@ -29,7 +30,9 @@ export default function AppLayout() {
 
   return (
     <AccountGate>
-      <Stack screenOptions={{ headerShown: false }} />
+      <ModeGate>
+        <Stack screenOptions={{ headerShown: false }} />
+      </ModeGate>
     </AccountGate>
   );
 }

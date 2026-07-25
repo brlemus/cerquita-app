@@ -125,12 +125,16 @@ consistente. Escala recomendada para el theme RN:
 `16px` es el padding horizontal de pantalla dominante en el prototipo
 (headers, listas, contenido) — usar como `spacing.screenPadding`.
 
-## Pantallas cubiertas por el diseño (scope customer)
+## Pantallas cubiertas por el diseño (scope customer + fundaciones owner)
 
 Login, Register, Home, Search, Business Catalog (detalle de negocio +
 menú), Product Detail, Cart, Checkout, Orders (historial), Tracking,
-Profile. (El bundle también incluye pantallas de owner/admin y un chooser
-de rol — **fuera de alcance de esta app**, no se traducen.)
+Profile. El bundle también incluye pantallas de owner/admin y el chooser
+de rol (CHOOSER, ADMIN: PROFILE, tab bar admin) — **re-alcanzadas a esta
+misma app desde la Fase 10** (`docs/phases/phase-10-owner-foundations.md`,
+`PLAN_MOBILE_CERQUITA.md`), ya no fuera de alcance. El resto del continente
+owner (CREATE BUSINESS, DASHBOARD, PRODUCTS, RESUMEN, etc.) se traduce
+recién en sus fases correspondientes (11-15).
 
 Notas de UX observadas en el prototipo, relevantes para la Fase de
 Checkout: la dirección de entrega en el checkout se selecciona de una

@@ -40,6 +40,15 @@ export function OrdersIcon({ color }: TabIconProps) {
   );
 }
 
+export function ProductsIcon({ color }: TabIconProps) {
+  return (
+    <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+      <Path d="M4 8l8-4 8 4-8 4z" stroke={color} strokeWidth={1.7} strokeLinejoin="round" />
+      <Path d="M4 8v8l8 4 8-4V8" stroke={color} strokeWidth={1.7} strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
 export function ProfileIcon({ color }: TabIconProps) {
   return (
     <Svg width={22} height={22} viewBox="0 0 22 22">

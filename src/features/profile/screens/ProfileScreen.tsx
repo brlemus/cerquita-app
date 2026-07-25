@@ -4,8 +4,10 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useLogout } from '@/features/auth/hooks/useLogout';
-import { useCartStore } from '@/features/cart/store/cartStore';
-import { colors, PinIcon, PressableOpacity, radius, spacing, Text } from '@/shared/ui';
+import { ModeSwitchRow } from '@/features/owner/components/ModeSwitchRow';
+import { useOwnerAccess } from '@/features/owner/hooks/useOwnerAccess';
+import { useSwitchMode } from '@/features/owner/hooks/useSwitchMode';
+import { colors, PinIcon, PressableOpacity, radius, spacing, StoreIcon, Text } from '@/shared/ui';
 import { ChatIcon, GearIcon, ShieldIcon } from '../components/icons';
 import { SettingsRow } from '../components/SettingsRow';
 import { useNotificationPermission } from '../hooks/useNotificationPermission';
@@ -15,16 +17,12 @@ export function ProfileScreen() {
   const { user } = useUser();
   const logout = useLogout();
   const notificationPermission = useNotificationPermission();
+  const { hasBusiness } = useOwnerAccess();
+  const { switchToOwner } = useSwitchMode();
 
   const name = user?.fullName ?? user?.firstName ?? 'Usuario';
   const email = user?.primaryEmailAddress?.emailAddress ?? '';
   const initial = name.charAt(0).toUpperCase();
-
-  function handleLogout() {
-    // el carrito es del usuario que sale de sesión -- no debe sobrevivir para el próximo login
-    useCartStore.getState().clearCart();
-    logout();
-  }
 
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
@@ -73,8 +71,18 @@ export function ProfileScreen() {
           />
         </View>
 
+        {hasBusiness ? (
+          <View style={styles.modeSwitchWrapper}>
+            <ModeSwitchRow
+              icon={<StoreIcon />}
+              label="Cambiar a administrar mi tienda"
+              onPress={switchToOwner}
+            />
+          </View>
+        ) : null}
+
         <PressableOpacity
-          onPress={handleLogout}
+          onPress={logout}
           style={styles.logoutButton}
           accessibilityRole="button"
           accessibilityLabel="Cerrar sesión"
@@ -134,6 +142,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.xl,
     overflow: 'hidden',
     backgroundColor: colors.surface.default,
+  },
+  modeSwitchWrapper: {
+    marginTop: spacing.lg,
   },
   logoutButton: {
     marginTop: spacing.md,

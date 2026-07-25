@@ -2,10 +2,16 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 
+import { useCartStore } from '@/features/cart/store/cartStore';
+import { useAppModeStore } from '@/features/owner/store/appModeStore';
 import { unregisterDevice } from '@/features/push/api/unregisterDevice';
 import { getFcmToken } from '@/features/push/getFcmToken';
 import { useLogout } from './useLogout';
 
+jest.mock('@react-native-async-storage/async-storage', () =>
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- jest.mock factory se hoistea, no puede referenciar un import de módulo externo
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
+);
 jest.mock('@/features/push/api/unregisterDevice');
 // Factory explícita: getFcmToken.ts importa @react-native-firebase/messaging
 // (módulo nativo no linkeado en test env) -- un automock de jest.mock()
@@ -122,5 +128,25 @@ describe('useLogout', () => {
     });
 
     expect(mockSignOut).toHaveBeenCalledTimes(1);
+  });
+
+  it('limpia el carrito y el modo owner (Decisión 4, Fase 10) -- ningún dato del usuario que sale sobrevive para el próximo login', async () => {
+    mockGetFcmToken.mockResolvedValue(null);
+    useCartStore.getState().addLine('b1', 'Paletería Lili', {
+      productId: 'p1',
+      productName: 'Paleta de sombrilla',
+      photoUrl: null,
+      unitPriceCents: 65,
+      quantity: 2,
+    });
+    useAppModeStore.getState().setMode('owner');
+    const { Wrapper } = createClientAndWrapper();
+
+    const { result } = renderHook(() => useLogout(), { wrapper: Wrapper });
+    await act(() => result.current());
+
+    expect(useCartStore.getState().lines).toEqual([]);
+    expect(useCartStore.getState().businessId).toBeNull();
+    expect(useAppModeStore.getState().mode).toBeNull();
   });
 });
