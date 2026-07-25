@@ -154,6 +154,14 @@ export function SignInScreen() {
           />
         </View>
 
+        <Link href="/(auth)/forgot-password" asChild>
+          <PressableOpacity hitSlop={8} style={styles.forgotPassword}>
+            <Text variant="bodySm" color="brand">
+              ¿Olvidaste tu contraseña?
+            </Text>
+          </PressableOpacity>
+        </Link>
+
         {formError ? (
           <Text variant="bodySm" color="danger" style={styles.formError}>
             {formError}
@@ -216,6 +224,10 @@ const styles = StyleSheet.create({
     // criterio ya usado en TextField para el padding de 14px).
     marginTop: 26,
     gap: spacing.lg,
+  },
+  forgotPassword: {
+    alignSelf: 'flex-end',
+    marginTop: spacing.md,
   },
   formError: {
     marginTop: spacing.sm,

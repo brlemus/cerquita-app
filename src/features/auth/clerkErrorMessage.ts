@@ -21,7 +21,22 @@ const MESSAGES: Record<string, string> = {
     'Esta cuenta no tiene una contraseña configurada para iniciar sesión así. Registrate de nuevo o contactá soporte.',
   user_locked: 'Tu cuenta se bloqueó temporalmente por demasiados intentos. Esperá unos minutos.',
   signup_rate_limit_exceeded: 'Hiciste demasiados intentos. Esperá un momento e intentá de nuevo.',
+  rate_limit_exceeded: 'Hiciste demasiados intentos. Esperá un momento e intentá de nuevo.',
   captcha_invalid: 'No pudimos verificar que sos una persona. Intentá de nuevo.',
+  // Reset de contraseña (Fase 7b) -- validación de la contraseña nueva y
+  // formato de parámetros, códigos confirmados contra el bundle de
+  // clerk-js (`form_password_*`, `form_param_format_invalid`).
+  form_password_not_strong_enough:
+    'Tu contraseña no es lo suficientemente segura — probá con otra.',
+  form_password_validation_failed: 'No pudimos validar esa contraseña. Probá con otra.',
+  form_password_length_too_long: 'La contraseña es muy larga.',
+  form_password_size_in_bytes_exceeded:
+    'La contraseña es muy larga — probá acortarla o sacar caracteres especiales.',
+  form_password_no_uppercase: 'La contraseña necesita al menos una mayúscula.',
+  form_password_no_lowercase: 'La contraseña necesita al menos una minúscula.',
+  form_password_no_number: 'La contraseña necesita al menos un número.',
+  form_password_no_special_char: 'La contraseña necesita al menos un carácter especial.',
+  form_param_format_invalid: 'El formato ingresado no es válido.',
   // OAuth (Google/Apple vía useSSO) — códigos confirmados contra el bundle
   // de @clerk/clerk-js. oauth_access_denied (el usuario cancela desde el
   // navegador) normalmente NO llega acá porque useSSO no tira excepción en

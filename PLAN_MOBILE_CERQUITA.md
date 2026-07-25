@@ -182,7 +182,7 @@ de plan file por unidad de trabajo (nacida en el PR #10,
 | **6a — Tab bar + Mis pedidos**        | Partición de la Fase 6 original (ver `docs/phases/phase-6-orders-tabs.md`): tab bar definitiva (Inicio/Pedidos/Perfil, con Perfil como stub mínimo — nombre/email de Clerk + cerrar sesión, el resto es Fase 7) y pantalla "Mis pedidos" (`GET /orders`, infinite scroll, pull-to-refresh, badge de estado) navegando al tracking de la Fase 5                                |
 | **6b — Reviews + Feedback**           | Review post-`ENTREGADO` (una por pedido), formulario de feedback general — PR aparte de la 6a, todavía sin planificar en detalle                                                                                                                                                                                                                                              |
 | **7a — Perfil real**                  | **Construida** (`docs/phases/phase-7a-profile.md`). Pantalla de perfil completa (reemplaza el stub de la 6a): filas Mis direcciones/Notificaciones/Privacidad, privacy policy accesible, borrado de cuenta vía Clerk (ver Store readiness). "Formas de pago" queda diferida (recorte documentado)                                                                             |
-| **7b — Recuperación de contraseña**   | Flujo Clerk de reset por código + restaurar el link "¿Olvidaste tu contraseña?" del login — pendiente, se planifica cuando 7a esté mergeada. Ver "Fase 7 — Perfil real (detalle)" abajo                                                                                                                                                                                       |
+| **7b — Recuperación de contraseña**   | **Construida** (`docs/phases/phase-7b-password-reset.md`). Flujo Clerk de reset por código (pantallas forgot-password y reset-password) + link "¿Olvidaste tu contraseña?" restaurado en el login. Caso borde de cuentas social-only cubierto con mensaje que nombra el proveedor                                                                                             |
 | **8 — Hardening + Store readiness**   | Checklist final de MASVS, accesibilidad (safe areas, touch targets, contraste), pantallas de permisos con contexto, ATT documentado como no-aplica, auditoría de logs sensibles, persistencia del Idempotency-Key en curso (límite aceptado en Fase 4, ver `docs/phases/phase-4-checkout.md`)                                                                                 |
 | **9 — Publicación**                   | Ver checklist al final de este documento                                                                                                                                                                                                                                                                                                                                      |
 
@@ -380,12 +380,6 @@ construible con el backend actual.
 - Banner promocional en Home (prototipo) — requiere un modelo de
   promociones (tabla + endpoint) que hoy no existe en el contrato.
 - Multi-negocio por pedido.
-- **Flujo de recuperación de contraseña** (Clerk reset por código) +
-  restaurar el link "¿Olvidaste tu contraseña?" en el login — el rediseño
-  de marca v2 (`docs/phases/chore-brand-v2-login-splash.md`) lo omitió a
-  propósito: un link visible sin flujo detrás es UI rota para quien más lo
-  necesita. Cuando este flujo exista, el link vuelve tal cual lo
-  especifica `assets/brand/README.md` (spec de Login, dirección 8b).
 - **MFA (segundo factor)**: soporte parcial — `email_code` implementado en
   Fase 5 (`SecondFactorScreen`, ver `docs/phases/phase-1-auth.md` y
   `docs/phases/phase-5-tracking.md`); TOTP y otras estrategias sin
