@@ -25,3 +25,11 @@ export const completeNameSchema = z.object({
   name: z.string().min(1, 'Ingresá tu nombre'),
 });
 export type CompleteNameFormValues = z.infer<typeof completeNameSchema>;
+
+export const forgotPasswordSchema = signInSchema.pick({ email: true });
+export type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
+
+export const resetPasswordSchema = verificationSchema.extend({
+  password: z.string().min(6, 'Mínimo 6 caracteres'),
+});
+export type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;

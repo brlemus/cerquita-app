@@ -1,4 +1,11 @@
-import { completeNameSchema, signInSchema, signUpSchema, verificationSchema } from './schemas';
+import {
+  completeNameSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  signInSchema,
+  signUpSchema,
+  verificationSchema,
+} from './schemas';
 
 describe('signInSchema', () => {
   it('accepts a valid email and password', () => {
@@ -64,5 +71,33 @@ describe('completeNameSchema', () => {
 
   it('rejects an empty name', () => {
     expect(completeNameSchema.safeParse({ name: '' }).success).toBe(false);
+  });
+});
+
+describe('forgotPasswordSchema', () => {
+  it('accepts a valid email', () => {
+    expect(forgotPasswordSchema.safeParse({ email: 'ana@cerquita.app' }).success).toBe(true);
+  });
+
+  it('rejects an invalid email', () => {
+    expect(forgotPasswordSchema.safeParse({ email: 'not-an-email' }).success).toBe(false);
+  });
+});
+
+describe('resetPasswordSchema', () => {
+  it('accepts a 6-digit code and a password of 6+ characters', () => {
+    expect(resetPasswordSchema.safeParse({ code: '123456', password: '123456' }).success).toBe(
+      true,
+    );
+  });
+
+  it('rejects a password shorter than 6 characters', () => {
+    const result = resetPasswordSchema.safeParse({ code: '123456', password: '123' });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects a code that is not 6 digits', () => {
+    const result = resetPasswordSchema.safeParse({ code: '123', password: '123456' });
+    expect(result.success).toBe(false);
   });
 });

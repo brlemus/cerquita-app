@@ -35,6 +35,21 @@ describe('getClerkErrorMessage', () => {
     expect(getClerkErrorMessage(error)).toBe('Cancelaste el inicio de sesión.');
   });
 
+  it('maps a weak new password on reset', () => {
+    const error = { errors: [{ code: 'form_password_not_strong_enough' }] };
+    expect(getClerkErrorMessage(error)).toContain('no es lo suficientemente segura');
+  });
+
+  it('maps the generic rate limit code from the password reset flow', () => {
+    const error = { errors: [{ code: 'rate_limit_exceeded' }] };
+    expect(getClerkErrorMessage(error)).toContain('demasiados intentos');
+  });
+
+  it('maps an invalid param format', () => {
+    const error = { errors: [{ code: 'form_param_format_invalid' }] };
+    expect(getClerkErrorMessage(error)).toBe('El formato ingresado no es válido.');
+  });
+
   it('falls back to a generic Spanish message for unmapped codes and logs the raw code in dev', () => {
     const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     const error = { errors: [{ code: 'some_unmapped_code', message: 'raw english text' }] };
