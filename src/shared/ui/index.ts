@@ -1,7 +1,7 @@
 export { Button, type ButtonProps } from './Button';
 export { EmptyState, type EmptyStateProps } from './EmptyState';
 export { ErrorState, type ErrorStateProps } from './ErrorState';
-export { PinIcon, ChevronRightIcon } from './icons';
+export { CartIcon, ChevronRightIcon, PinIcon, StoreIcon } from './icons';
 export { KeyboardAwareScreen, type KeyboardAwareScreenProps } from './KeyboardAwareScreen';
 export { PressableOpacity, type PressableOpacityProps } from './PressableOpacity';
 export { QuickAddButton, type QuickAddButtonProps } from './QuickAddButton';
