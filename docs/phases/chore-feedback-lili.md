@@ -1,6 +1,7 @@
 # Chore "feedback de Lili"
 
-**Estado**: Planificado, no iniciado.
+**Estado**: Implementado, gate de cierre en verde. Pendiente: verificación
+visual del usuario + PR + merge.
 
 ## Contexto
 
@@ -268,4 +269,8 @@ visualmente primero.
     archivos) → **59 suites, 311 tests, 0 fallos**. `pnpm exec tsc
 --noEmit` → limpio. `pnpm lint` → 0 errores, mismos 2 warnings
     preexistentes de Fase 7a (no de este chore).
-- [ ] Cierre: gate completo + PR (esperar verificación visual antes de mergear)
+- [x] **Cierre.** `pnpm exec jest --silent` → **59 suites, 311 tests, 0
+      fallos**. `pnpm exec tsc --noEmit` → limpio. `pnpm lint` → 0 errores
+      (2 warnings preexistentes, ajenos a este chore). PR abierto, link
+      pasado al usuario. **Pendiente explícito: verificación visual del
+      usuario antes de mergear** (pedido al aprobar el plan).
