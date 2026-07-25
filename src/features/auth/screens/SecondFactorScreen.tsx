@@ -8,7 +8,16 @@ import Svg, { Path } from 'react-native-svg';
 
 import { getClerkErrorMessage } from '../clerkErrorMessage';
 import { verificationSchema, type VerificationFormValues } from '../schemas';
-import { Button, colors, KeyboardAwareScreen, radius, spacing, Text, TextField } from '@/shared/ui';
+import {
+  Button,
+  colors,
+  KeyboardAwareScreen,
+  PressableOpacity,
+  radius,
+  spacing,
+  Text,
+  TextField,
+} from '@/shared/ui';
 
 const RESEND_COOLDOWN_SECONDS = 30;
 
@@ -152,7 +161,7 @@ export function SecondFactorScreen() {
           onPress={handleSubmit(onSubmit)}
           style={styles.submit}
         />
-        <Pressable
+        <PressableOpacity
           accessibilityRole="button"
           disabled={cooldown > 0 || isResending}
           onPress={onResend}
@@ -161,7 +170,7 @@ export function SecondFactorScreen() {
           <Text variant="bodySm" color={cooldown > 0 ? 'secondary' : 'brand'}>
             {cooldown > 0 ? `Reenviar código (${cooldown}s)` : 'Reenviar código'}
           </Text>
-        </Pressable>
+        </PressableOpacity>
       </View>
     </KeyboardAwareScreen>
   );

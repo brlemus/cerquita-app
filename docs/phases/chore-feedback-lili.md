@@ -238,5 +238,34 @@ visualmente primero.
     en la primera corrida resultó ser flaky de la suite existente, no
     relacionado — pasó solo y en la corrida siguiente). `pnpm exec tsc
 --noEmit` → limpio. `eslint` sobre los archivos tocados → limpio.
-- [ ] CP2 — Feedback de pressed en links de texto
+- [x] **CP2 — Feedback de pressed en links de texto.** Cerrado.
+  - `PressableOpacity` (nuevo, `shared/ui/`): drop-in de `Pressable`, opacidad
+    0.6 en `pressed && !disabled`, compone sobre cualquier `style` previo
+    (mismo patrón que `Button.tsx`). Test mínimo (onPress se dispara /
+    no se dispara si `disabled`), igual que `Button.test.tsx`.
+  - 16 call sites migrados: `ProfileScreen`, `OrderTrackingScreen`,
+    `VerifyEmailScreen` (×2), `SecondFactorScreen`, `CompleteNameScreen`,
+    `CheckoutScreen` (×2), `DeleteAccountScreen`, `AddressFormScreen` (×2),
+    `LocationCaptureCard` (×3), `OrderConfirmationScreen`. En cada archivo
+    se removió el import de `Pressable` de `react-native` cuando quedó sin
+    otros usos (`ProfileScreen`, `CompleteNameScreen`, `OrderConfirmationScreen`);
+    se dejó donde sigue habiendo otros `Pressable` fuera de alcance
+    (`OrderTrackingScreen`, `VerifyEmailScreen`, `SecondFactorScreen`,
+    `CheckoutScreen`, `AddressFormScreen`, `LocationCaptureCard`).
+  - `SignInScreen`: único `<Link>` del repo, envuelto
+    `<Link href="..." asChild><PressableOpacity>...` — el `style` que
+    tenía el `Link` se movió al `PressableOpacity` hijo.
+  - `SettingsRow`: patrón de fila (no `PressableOpacity`) —
+    `pressed && styles.pressed` con `backgroundColor: colors.surface.subtle`,
+    mismo mecanismo que `OrderRow`/`ProductCard`. Afecta las 4 filas de
+    Perfil.
+  - **Agregado del usuario al aprobar el plan**: `LocationCaptureCard` —
+    "Usar mi ubicación" (mini-CTA con fondo) resuelto con el patrón de
+    `Button` (`state.pressed && styles.primaryLinkPressed`, fondo
+    `colors.brand.pressed`, token ya existente) — sigue siendo `Pressable`
+    normal, no `PressableOpacity`.
+  - Gate: `pnpm exec jest --silent` (suite completa, por el volumen de
+    archivos) → **59 suites, 311 tests, 0 fallos**. `pnpm exec tsc
+--noEmit` → limpio. `pnpm lint` → 0 errores, mismos 2 warnings
+    preexistentes de Fase 7a (no de este chore).
 - [ ] Cierre: gate completo + PR (esperar verificación visual antes de mergear)

@@ -1,6 +1,6 @@
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
-import { colors, PinIcon, radius, spacing, Text } from '@/shared/ui';
+import { colors, PinIcon, PressableOpacity, radius, spacing, Text } from '@/shared/ui';
 import type { UseAddressLocationResult } from '../hooks/useAddressLocation';
 
 export type LocationCaptureCardProps = {
@@ -33,11 +33,11 @@ export function LocationCaptureCard({ location }: LocationCaptureCardProps) {
           {location.source === 'existing' ? (
             <>
               <Text variant="bodyMd">Ubicación guardada</Text>
-              <Pressable onPress={location.requestGps} accessibilityRole="button">
+              <PressableOpacity onPress={location.requestGps} accessibilityRole="button">
                 <Text variant="bodySm" color="brand">
                   Actualizar con GPS
                 </Text>
-              </Pressable>
+              </PressableOpacity>
             </>
           ) : location.source === 'gps' ? (
             <Text variant="bodyMd">
@@ -64,14 +64,14 @@ export function LocationCaptureCard({ location }: LocationCaptureCardProps) {
           <Text variant="bodySm" color="secondary">
             Sin ubicación por GPS. Contanos cómo llegar abajo — vamos a ubicarte con eso.
           </Text>
-          <Pressable
+          <PressableOpacity
             onPress={location.canAskPermissionAgain ? location.requestGps : location.openSettings}
             accessibilityRole="button"
           >
             <Text variant="bodySm" color="brand">
               {location.canAskPermissionAgain ? 'Reintentar permiso' : 'Abrir ajustes'}
             </Text>
-          </Pressable>
+          </PressableOpacity>
         </View>
       </View>
     );
@@ -85,17 +85,17 @@ export function LocationCaptureCard({ location }: LocationCaptureCardProps) {
         <Pressable
           onPress={location.requestGps}
           accessibilityRole="button"
-          style={styles.primaryLink}
+          style={(state) => [styles.primaryLink, state.pressed && styles.primaryLinkPressed]}
         >
           <Text variant="bodySm" color="onBrand" style={styles.primaryLinkText}>
             Usar mi ubicación
           </Text>
         </Pressable>
-        <Pressable onPress={location.useManualFallback} accessibilityRole="button">
+        <PressableOpacity onPress={location.useManualFallback} accessibilityRole="button">
           <Text variant="bodySm" color="secondary">
             Ingresar manualmente
           </Text>
-        </Pressable>
+        </PressableOpacity>
       </View>
     </View>
   );
@@ -126,6 +126,9 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     minHeight: 44,
     justifyContent: 'center',
+  },
+  primaryLinkPressed: {
+    backgroundColor: colors.brand.pressed,
   },
   primaryLinkText: {
     fontWeight: '700',

@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackIcon } from '@/features/marketplace/components/icons';
 import { useBottomInset } from '@/shared/hooks';
-import { colors, radius, spacing, Text } from '@/shared/ui';
+import { colors, PressableOpacity, radius, spacing, Text } from '@/shared/ui';
 import { PRIVACY_POLICY_CONTACT_EMAIL } from '../data/privacyPolicy';
 import { useDeleteAccount } from '../hooks/useDeleteAccount';
 
@@ -51,7 +51,7 @@ export function DeleteAccountScreen() {
               Tu historial de pedidos se conserva, pero desvinculado de tu identidad de acceso, por
               razones contables y legales.
             </Text>
-            <Pressable
+            <PressableOpacity
               onPress={() => router.push('/privacy')}
               accessibilityRole="button"
               style={styles.privacyLink}
@@ -59,7 +59,7 @@ export function DeleteAccountScreen() {
               <Text variant="bodySm" color="brand">
                 Ver la política de privacidad
               </Text>
-            </Pressable>
+            </PressableOpacity>
             <Text variant="bodyMd" color="secondary" style={styles.paragraph}>
               Podés volver a registrarte con el mismo email cuando quieras.
             </Text>

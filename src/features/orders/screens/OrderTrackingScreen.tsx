@@ -14,7 +14,7 @@ import { BackIcon } from '@/features/marketplace/components/icons';
 import { OrderReviewCard } from '@/features/reviews/components/OrderReviewCard';
 import { ApiRequestError } from '@/shared/api';
 import { useBottomInset } from '@/shared/hooks';
-import { Button, colors, ErrorState, radius, spacing, Text } from '@/shared/ui';
+import { Button, colors, ErrorState, PressableOpacity, radius, spacing, Text } from '@/shared/ui';
 import { OrderDetailCard } from '../components/OrderDetailCard';
 import { OrderStatusStepper } from '../components/OrderStatusStepper';
 import { useCancelOrder } from '../hooks/useCancelOrder';
@@ -159,7 +159,7 @@ export function OrderTrackingScreen() {
 
         <View style={[styles.footer, { paddingBottom: bottomInset }]}>
           {canCancel ? (
-            <Pressable
+            <PressableOpacity
               onPress={handleCancel}
               disabled={cancelMutation.isPending}
               style={styles.cancelButton}
@@ -168,7 +168,7 @@ export function OrderTrackingScreen() {
               <Text variant="bodyMd" color="danger">
                 {cancelMutation.isPending ? 'Cancelando…' : 'Cancelar pedido'}
               </Text>
-            </Pressable>
+            </PressableOpacity>
           ) : null}
           <Button title="Volver al inicio" size="lg" onPress={() => router.replace('/')} />
         </View>

@@ -11,6 +11,7 @@ import {
   colors,
   ErrorState,
   KeyboardAwareScreen,
+  PressableOpacity,
   radius,
   Skeleton,
   spacing,
@@ -264,17 +265,17 @@ export function AddressFormScreen() {
       {isEdit && existingAddress ? (
         <View style={styles.secondaryActions}>
           {!existingAddress.isDefault ? (
-            <Pressable onPress={handleSetDefault} accessibilityRole="button">
+            <PressableOpacity onPress={handleSetDefault} accessibilityRole="button">
               <Text variant="bodySm" color="brand">
                 Marcar como predeterminada
               </Text>
-            </Pressable>
+            </PressableOpacity>
           ) : null}
-          <Pressable onPress={handleDelete} accessibilityRole="button">
+          <PressableOpacity onPress={handleDelete} accessibilityRole="button">
             <Text variant="bodySm" color="danger">
               Eliminar dirección
             </Text>
-          </Pressable>
+          </PressableOpacity>
         </View>
       ) : null}
 

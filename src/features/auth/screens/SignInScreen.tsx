@@ -11,7 +11,14 @@ import { LoginPrimaryButton } from '../components/LoginPrimaryButton';
 import { SocialSignInButtons } from '../components/SocialSignInButtons';
 import { findEmailCodeSecondFactor } from '../findEmailCodeSecondFactor';
 import { signInSchema, type SignInFormValues } from '../schemas';
-import { colors, KeyboardAwareScreen, spacing, Text, TextField } from '@/shared/ui';
+import {
+  colors,
+  KeyboardAwareScreen,
+  PressableOpacity,
+  spacing,
+  Text,
+  TextField,
+} from '@/shared/ui';
 
 export function SignInScreen() {
   const router = useRouter();
@@ -162,13 +169,15 @@ export function SignInScreen() {
 
         <SocialSignInButtons onError={setFormError} />
 
-        <Link href="/(auth)/sign-up" style={styles.footer}>
-          <Text variant="bodyMd" color="secondary" style={styles.footerText}>
-            ¿No tenés cuenta?{' '}
-            <Text variant="bodyMd" color="brand">
-              Crear cuenta
+        <Link href="/(auth)/sign-up" asChild>
+          <PressableOpacity style={styles.footer}>
+            <Text variant="bodyMd" color="secondary" style={styles.footerText}>
+              ¿No tenés cuenta?{' '}
+              <Text variant="bodyMd" color="brand">
+                Crear cuenta
+              </Text>
             </Text>
-          </Text>
+          </PressableOpacity>
         </Link>
       </View>
     </KeyboardAwareScreen>

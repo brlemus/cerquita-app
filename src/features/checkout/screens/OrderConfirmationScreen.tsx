@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useBusiness } from '@/features/marketplace/hooks/useBusiness';
@@ -7,7 +7,7 @@ import { OrderInfoRow } from '@/features/orders/components/OrderInfoRow';
 import { useOrder } from '@/features/orders/hooks/useOrder';
 import { shortOrderId } from '@/features/orders/utils/orderStatus';
 import { useBottomInset } from '@/shared/hooks';
-import { Button, colors, ErrorState, radius, spacing, Text } from '@/shared/ui';
+import { Button, colors, ErrorState, PressableOpacity, radius, spacing, Text } from '@/shared/ui';
 import { formatMoneyCents } from '@/shared/utils';
 
 /**
@@ -73,7 +73,7 @@ export function OrderConfirmationScreen() {
       </View>
 
       <View style={[styles.footer, { paddingBottom: bottomInset }]}>
-        <Pressable
+        <PressableOpacity
           onPress={() => router.push(`/orders/${order.id}`)}
           accessibilityRole="button"
           style={styles.trackLink}
@@ -81,7 +81,7 @@ export function OrderConfirmationScreen() {
           <Text variant="bodySm" color="brand">
             Ver seguimiento ›
           </Text>
-        </Pressable>
+        </PressableOpacity>
         <Button title="Volver al inicio" size="lg" onPress={() => router.replace('/')} />
       </View>
     </SafeAreaView>

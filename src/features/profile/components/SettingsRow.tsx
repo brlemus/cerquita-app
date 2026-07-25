@@ -25,7 +25,7 @@ export function SettingsRow({
   return (
     <Pressable
       onPress={onPress}
-      style={[styles.row, divider && styles.divider]}
+      style={({ pressed }) => [styles.row, divider && styles.divider, pressed && styles.pressed]}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityHint={accessibilityHint}
@@ -56,6 +56,9 @@ const styles = StyleSheet.create({
   divider: {
     borderBottomWidth: 1,
     borderBottomColor: colors.border.default,
+  },
+  pressed: {
+    backgroundColor: colors.surface.subtle,
   },
   icon: {
     width: 20,

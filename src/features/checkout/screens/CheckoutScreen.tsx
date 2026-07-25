@@ -15,6 +15,7 @@ import {
   colors,
   EmptyState,
   PinIcon,
+  PressableOpacity,
   radius,
   spacing,
   Text,
@@ -160,7 +161,7 @@ export function CheckoutScreen() {
           <ChevronRightIcon />
         </Pressable>
         {selectedAddress && addresses.length > 1 ? (
-          <Pressable
+          <PressableOpacity
             onPress={() => router.push('/addresses?returnTo=/checkout')}
             accessibilityRole="button"
             style={styles.changeAddress}
@@ -168,7 +169,7 @@ export function CheckoutScreen() {
             <Text variant="bodySm" color="brand">
               Cambiar dirección
             </Text>
-          </Pressable>
+          </PressableOpacity>
         ) : null}
 
         <View style={[styles.row, styles.staticRow]}>
@@ -234,14 +235,14 @@ export function CheckoutScreen() {
             <Text variant="bodySm" color="danger">
               {errorView.message}
             </Text>
-            <Pressable
+            <PressableOpacity
               onPress={() => handleErrorAction(errorView.action)}
               accessibilityRole="button"
             >
               <Text variant="bodySm" color="brand">
                 {errorView.actionLabel}
               </Text>
-            </Pressable>
+            </PressableOpacity>
           </View>
         ) : null}
       </ScrollView>
