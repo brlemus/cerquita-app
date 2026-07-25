@@ -3,13 +3,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Pressable, StyleSheet, View, type TextInput } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import { StyleSheet, View, type TextInput } from 'react-native';
 
 import { getClerkErrorMessage } from '../clerkErrorMessage';
+import { BackButton } from '../components/BackButton';
 import { SocialSignInButtons } from '../components/SocialSignInButtons';
 import { signUpSchema, type SignUpFormValues } from '../schemas';
-import { Button, colors, KeyboardAwareScreen, radius, spacing, Text, TextField } from '@/shared/ui';
+import { Button, KeyboardAwareScreen, spacing, Text, TextField } from '@/shared/ui';
 
 export function SignUpScreen() {
   const router = useRouter();
@@ -51,22 +51,7 @@ export function SignUpScreen() {
       contentContainerStyle={styles.form}
       header={
         <View style={styles.header}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Volver"
-            onPress={() => router.back()}
-            style={styles.backButton}
-          >
-            <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-              <Path
-                d="M15 5l-7 7 7 7"
-                stroke={colors.text.primary}
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </Svg>
-          </Pressable>
+          <BackButton onPress={() => router.back()} />
           <Text variant="titleSm">Crear cuenta</Text>
         </View>
       }
@@ -161,14 +146,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
-  },
-  backButton: {
-    width: 38,
-    height: 38,
-    borderRadius: radius.full,
-    backgroundColor: colors.surface.subtle,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   form: {
     paddingHorizontal: spacing.xxl,

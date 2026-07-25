@@ -1,25 +1,16 @@
 import { useSignIn } from '@clerk/clerk-expo';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import { StyleSheet, View } from 'react-native';
 
 import { getClerkErrorMessage } from '../clerkErrorMessage';
+import { BackButton } from '../components/BackButton';
+import { CodeField } from '../components/CodeField';
+import { useResendCooldown } from '../hooks/useResendCooldown';
 import { verificationSchema, type VerificationFormValues } from '../schemas';
-import {
-  Button,
-  colors,
-  KeyboardAwareScreen,
-  PressableOpacity,
-  radius,
-  spacing,
-  Text,
-  TextField,
-} from '@/shared/ui';
-
-const RESEND_COOLDOWN_SECONDS = 30;
+import { Button, KeyboardAwareScreen, PressableOpacity, spacing, Text } from '@/shared/ui';
 
 /**
  * Segundo factor por email (`email_code` -- el único que la app soporta,
@@ -33,7 +24,7 @@ export function SecondFactorScreen() {
   const router = useRouter();
   const { isLoaded, signIn, setActive } = useSignIn();
   const [formError, setFormError] = useState<string | null>(null);
-  const [cooldown, setCooldown] = useState(RESEND_COOLDOWN_SECONDS);
+  const { cooldown, restart } = useResendCooldown();
   const [isResending, setIsResending] = useState(false);
   const {
     control,
@@ -43,14 +34,6 @@ export function SecondFactorScreen() {
     resolver: zodResolver(verificationSchema),
     defaultValues: { code: '' },
   });
-
-  useEffect(() => {
-    if (cooldown === 0) {
-      return;
-    }
-    const id = setTimeout(() => setCooldown((seconds) => seconds - 1), 1000);
-    return () => clearTimeout(id);
-  }, [cooldown]);
 
   const emailFactor = signIn?.supportedSecondFactors?.find((f) => f.strategy === 'email_code');
 
@@ -88,7 +71,7 @@ export function SecondFactorScreen() {
         strategy: 'email_code',
         emailAddressId: emailFactor.emailAddressId,
       });
-      setCooldown(RESEND_COOLDOWN_SECONDS);
+      restart();
     } catch (error) {
       setFormError(getClerkErrorMessage(error));
     } finally {
@@ -101,22 +84,7 @@ export function SecondFactorScreen() {
       contentContainerStyle={styles.content}
       header={
         <View style={styles.topBar}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Volver"
-            onPress={() => router.back()}
-            style={styles.backButton}
-          >
-            <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-              <Path
-                d="M15 5l-7 7 7 7"
-                stroke={colors.text.primary}
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </Svg>
-          </Pressable>
+          <BackButton onPress={() => router.back()} />
         </View>
       }
     >
@@ -134,14 +102,7 @@ export function SecondFactorScreen() {
           control={control}
           name="code"
           render={({ field: { value, onChange, onBlur } }) => (
-            <TextField
-              label="Código de verificación"
-              placeholder="123456"
-              keyboardType="number-pad"
-              maxLength={6}
-              textContentType={Platform.OS === 'ios' ? 'oneTimeCode' : undefined}
-              returnKeyType="done"
-              submitBehavior="blurAndSubmit"
+            <CodeField
               value={value}
               onChangeText={onChange}
               onBlur={onBlur}
@@ -180,14 +141,6 @@ const styles = StyleSheet.create({
   topBar: {
     paddingHorizontal: spacing.xxl,
     paddingTop: spacing.xxl,
-  },
-  backButton: {
-    width: 38,
-    height: 38,
-    borderRadius: radius.full,
-    backgroundColor: colors.surface.subtle,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   content: {
     paddingHorizontal: spacing.xxl,
