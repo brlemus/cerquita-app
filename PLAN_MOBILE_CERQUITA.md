@@ -2,7 +2,7 @@
 
 App móvil de Cerquita. El MVP (Fases 0-9) es **customer puro**; a partir de
 ahí la misma app suma un **modo owner** para dueños de negocio (Fases
-10-14, ver "Modo owner: Fases 10-14" más abajo) — el repo web queda
+10-15, ver "Modo owner: Fases 10-15" más abajo) — el repo web queda
 acotado a **solo el panel de super-admin**, no a owner/admin en general
 como se asumía originalmente. Consume `cerquita-api` (NestJS, en producción) según
 `docs/API_CONTRACT.md` — el contrato está fijado, esta app se adapta a él.
@@ -234,43 +234,62 @@ tras el análisis de paridad contra el prototipo (pantalla CLIENT: PROFILE):
   Fase 1 + restaurar el link "¿Olvidaste tu contraseña?" del spec 8b).
   Fase 7 es su hogar natural: cierra el auth completo.
 
-## Modo owner: Fases 10-14 (post-Fase 9)
+## Modo owner: Fases 10-15 (post-Fase 9)
 
 **Cambio de alcance respecto a la v1 original de este documento**: el modo
 owner **sí vive en esta app**, en fases posteriores a las de customer. El
 repo web queda acotado a **solo el panel de super-admin**, no a
 owner/admin en general como se asumía originalmente.
 
-Partición en fases numeradas (10 a 14). Regla heredada del resto del plan:
-cada fase produce su plan file al abordarse — el orden 10→14 es la
+Partición en fases numeradas (10 a 15). Regla heredada del resto del plan:
+cada fase produce su plan file al abordarse — el orden 10→15 es la
 secuencia recomendada (10 y 11 son prerequisito del resto). **Cada fase
 lista sus prerequisitos de backend**: esos se planifican como fases/chores
 en `cerquita-api` con su propio plan, ANTES de la fase mobile que los
 consume.
 
-### Fase 10 — Fundaciones del modo owner (identidad, chooser, negocio)
+### Fase 10 — Fundaciones del modo owner (identidad, chooser, switch, shell)
 
-Pantallas del prototipo: CHOOSER (owner), ADMIN: CREATE BUSINESS, parte de
-ADMIN: PROFILE.
+**Plan file**: `docs/phases/phase-10-owner-foundations.md`.
 
-- Punto de entrada "¿Tenés un negocio?" desde Perfil del cliente (backlog
-  de Fase 1, por fin ejecutado) → flujo de conversión a owner.
-- `[PENDIENTE-BYRON]` mecánica de alta: ¿auto-servicio (el usuario crea su
-  negocio y queda `PENDING` hasta aprobación del super-admin en el panel
-  web) o solo por invitación del super-admin? El prototipo sugiere
-  auto-servicio (selector "Tengo un negocio" en registro — que se
-  descartó por JIT; la conversión post-registro desde Perfil lo
-  reemplaza).
-- Pantalla **Crear negocio**: nombre, categoría de plataforma, costo de
-  envío, mínimo de compra, tiempo estimado, **logo → Cloudinary** (primer
-  flujo de upload del mobile).
+Pantallas del prototipo: CHOOSER (owner), parte de ADMIN: PROFILE (solo la
+fila de switch y "Mi negocio"), shell del tab bar admin (sin construir sus
+destinos todavía).
+
+Decisión **D2 resuelta** (ver "Decisiones de producto" más abajo): alta de
+negocio **solo por invitación** — el super-admin crea el negocio y asigna
+la dueña manualmente. Eso saca de esta fase, y las manda a la **Fase 15**:
+
+- Pantalla **Crear negocio** (ADMIN: CREATE BUSINESS del prototipo).
+- Punto de entrada "¿Tenés un negocio?" en Perfil del cliente.
+- **Logo → Cloudinary** (primer flujo de upload del mobile) y su
+  prerequisito de firma pública.
+
+Lo que sí entra en la Fase 10:
+
+- Detección de rol/negocio vía `GET /auth/me` (`role` + `businessId`, ya
+  expuestos — sin backend nuevo) y `GET /business/me` (existe, `BUSINESS_OWNER`
+  estricto).
 - **Chooser post-login** ("¿Dónde querés entrar?") para usuarios con
-  negocio + switch bidireccional cliente↔admin sin re-login (filas
-  "Cambiar a..." de ambos perfiles del prototipo).
-- Prerequisitos backend (verificar contra `API_CONTRACT` antes de
-  planear): flujo de conversión de rol/alta de negocio por el propio
-  usuario; firma/endpoint de upload a Cloudinary (`StoragePort` existe;
-  falta la ruta pública de firma).
+  negocio; los customer puros no lo ven nunca.
+- **Switch bidireccional** cliente↔admin sin re-login (filas "Cambiar
+  a..." de ambos perfiles del prototipo), persistido y sobreviviendo al
+  arranque en frío.
+- **Shell del modo admin**: tab bar de 3 tabs (Pedidos · Productos ·
+  Perfil, arrancando en Pedidos), con Pedidos/Productos como placeholders
+  diseñados hasta que lleguen las Fases 11/12, y Perfil real (identidad +
+  datos del negocio vía `GET /business/me` + switch de vuelta).
+- **Gap de backend real, verificado**: no existe `POST /platform/businesses`
+  ni ningún endpoint para que el super-admin cree un negocio y asigne un
+  owner — el único alta hoy es auto-servicio (`POST /business/me`, toma el
+  `ownerId` del propio JWT). Se registra como **chore de BE**
+  (`POST /platform/businesses` con `ownerUserId`, transaccional con la
+  promoción de rol) prerequisito del **go-live**, no del código de esta
+  fase — mientras tanto hay runbook manual (Prisma Studio + Swagger,
+  documentado en el plan file) para el alta real.
+- Verificado sin gap: los endpoints de compra (`orders`, `addresses`,
+  `reviews`) no exigen rol `CUSTOMER` — cualquier rol autenticado puede
+  comprar, así que el switch bidireccional es viable tal cual.
 
 ### Fase 11 — Pedidos entrantes (operación diaria)
 
@@ -286,6 +305,13 @@ Pantallas: ADMIN: DASHBOARD, ADMIN: ORDER DETAIL.
   (`business/me/orders`); verificar push/aviso al owner de pedido nuevo y
   de cancelación (este último ya está en backlog del backend como fase
   8-BE).
+- **Backlog heredado de Fase 10** (`docs/phases/phase-10-owner-foundations.md`,
+  sección "Limitación conocida"): `ModeGate` hoy redirige cualquier deep
+  link a una ruta `(owner)` al modo activo, sin excepción por origen —
+  un push de "pedido nuevo" recibido en modo cliente perdería su destino.
+  Esta fase define el comportamiento correcto (probablemente: deep links
+  mode-aware que cambian el modo persistido al del destino antes de
+  navegar).
 
 ### Fase 12 — Catálogo del owner
 
@@ -324,7 +350,12 @@ Pantalla: ADMIN: RESUMEN.
 
 Pantalla: ADMIN: PROFILE + lectura de reseñas/feedback.
 
-- **Editar negocio** (los mismos campos de Crear negocio + logo).
+- **Editar negocio** (los mismos campos de Crear negocio + logo,
+  `PATCH /business/me`). Construye acá el formulario de negocio como
+  **edición**; la Fase 15 lo reusa para **creación** — el prototipo ya usa
+  una sola pantalla para ambos casos (`bizFormTitle`/`bizSaveLabel`
+  condicionales), así que 15 no repite el formulario, solo agrega el modo
+  "crear" sobre el que construye esta fase.
 - Fila **"Métodos de cobro"**: `[DECISIÓN: diferida]` igual que Formas de
   pago del cliente — efectivo-only; la fila no se muestra hasta que
   exista otra.
@@ -335,13 +366,35 @@ Pantalla: ADMIN: PROFILE + lectura de reseñas/feedback.
   las reseñas se escriben y nadie las lee.
 - Datos de la cuenta (reuso del Perfil de cliente).
 
+### Fase 15 (post-MVP) — Auto-servicio de alta de negocio
+
+No entra en el alcance inicial del modo owner — recortada de la Fase 10 al
+resolverse **D2 por la opción invitación-only** (ver "Decisiones de
+producto"). Se retoma si/cuando el volumen de negocios lo justifique.
+
+- Pantalla **Crear negocio** (ADMIN: CREATE BUSINESS del prototipo):
+  nombre, categoría de plataforma, costo de envío, mínimo de compra,
+  tiempo estimado, logo. Reusa el formulario construido en la Fase 14 en
+  modo "crear".
+- Punto de entrada **"¿Tenés un negocio?"** desde Perfil del cliente
+  (backlog de Fase 1) → flujo de conversión a owner.
+- Flujo de aprobación: el negocio nace `PENDING`, el super-admin lo
+  aprueba desde el panel web (`PATCH /platform/businesses/:id/approve`,
+  ya existe).
+- **Logo → Cloudinary**: primer flujo de upload del mobile. Prerequisito
+  backend: `StoragePort` existe; falta la ruta pública de firma.
+- Backend ya soporta la mecánica de fondo (`POST /business/me`
+  auto-promueve al `BUSINESS_OWNER` actor) — el trabajo de esta fase es
+  mobile-only salvo la firma de Cloudinary.
+
 ### Sin cambios respecto al registro
 
 El registro sigue sin selector de rol — todo usuario nuevo nace
 `CUSTOMER` vía el flujo JIT del backend (decisión ya confirmada en Fase
 1, ver `docs/phases/phase-1-auth.md`). La promoción a `BUSINESS_OWNER`
-pasa exclusivamente por el flujo de auto-servicio desde Perfil (Fase 10),
-nunca por un selector en el registro.
+pasa exclusivamente por invitación del super-admin (Fase 10, D2), nunca
+por un selector en el registro ni por auto-servicio en el MVP — el
+auto-servicio queda diferido a la Fase 15.
 
 ## Paridad con el prototipo
 
@@ -365,7 +418,7 @@ construible con el backend actual.
 | Orden por cercanía                                  | Bloqueado — gap de contrato (nuevo, anotado acá) | `Business` tiene `lat`/`lng` (nullable), pero `GET /marketplace/businesses` no expone ningún parámetro de orden/distancia — solo paginación por cursor. Sin ese parámetro en el backend no hay forma de pedir "más cercanos primero".                                               |
 | Banner promocional (Home)                           | Backlog post-MVP                                 | Requiere un modelo de promociones (tabla + endpoint) que hoy no existe en el contrato — ver ítem agregado en Backlog post-MVP, abajo.                                                                                                                                               |
 | Campana de notificaciones (Home)                    | Recorte permanente                               | El push de Fase 5 deep-linkea directo al pedido correspondiente (`docs/API_CONTRACT.md`, sección Devices). Un centro de notificaciones aparte sería UI sin función real, no una fase pendiente.                                                                                     |
-| Fotos de producto reales                            | Dato pendiente (Cloudinary + fases owner)        | El campo `photoUrl` ya se consume donde existe, con fallback diseñado cuando es `null` (Fase 2/3). Las fotos reales dependen de que el flujo de upload a Cloudinary y el catálogo de modo owner (ver "Modo owner: Fases 10-14" arriba) estén construidos y en uso por los negocios. |
+| Fotos de producto reales                            | Dato pendiente (Cloudinary + fases owner)        | El campo `photoUrl` ya se consume donde existe, con fallback diseñado cuando es `null` (Fase 2/3). Las fotos reales dependen de que el flujo de upload a Cloudinary y el catálogo de modo owner (ver "Modo owner: Fases 10-15" arriba) estén construidos y en uso por los negocios. |
 | Pill "Próximamente" (negocio/producto no activo)    | Recorte permanente                               | El contrato solo expone `status: ACTIVE`/`isActive: true` al customer (`docs/API_CONTRACT.md`, sección Marketplace) — un negocio o producto `PENDING`/inactivo nunca llega al cliente, así que no hay estado que mostrar.                                                           |
 | Cuarta tab "Buscar" (tab bar del prototipo, 4 tabs) | Recorte deliberado                               | `[DECISIÓN: desviación deliberada]` — la app usa 3 tabs (Inicio/Pedidos/Perfil) + búsqueda pusheada desde Home (Fase 6a, verificada en uso). Ver Backlog post-MVP para el detalle; revisable si el uso real lo pide.                                                                |
 
@@ -400,21 +453,32 @@ construible con el backend actual.
 | Cuarta tab "Buscar"                                    | Tab bar del prototipo (4 tabs) | `[DECISIÓN: desviación deliberada]` — la app usa 3 tabs + búsqueda pusheada desde Home (Fase 6a, verificada en uso). Documentado en la tabla de paridad como recorte consciente, revisable si el uso real lo pide.                                                                         |
 | Info de repartidor en tracking ("Repartidor asignado") | CLIENT: TRACKING               | `[PENDIENTE-BYRON]` — no existe modelo de courier en el backend. Decisión de producto entera: ¿los negocios entregan con su propia gente (recorte permanente) o habrá repartidores como entidad (fase mayor futura)? Hasta decidirse: fila de paridad "Pendiente de decisión de producto". |
 
-## Decisiones de producto pendientes
+## Decisiones de producto
 
-Registro centralizado de decisiones abiertas — ninguna fase las resuelve
-por su cuenta; se marcan `[PENDIENTE-BYRON]` en el lugar donde aparecen y
-se listan acá para no perderlas de vista:
+Registro centralizado de decisiones de producto — ninguna fase las
+resuelve por su cuenta; las abiertas se marcan `[PENDIENTE-BYRON]` en el
+lugar donde aparecen y se listan acá con ID estable para no perderlas de
+vista.
 
-1. **Repartidor/courier**: ¿recorte permanente (los negocios entregan con
-   su propia gente) o entidad futura del modelo? Ver Backlog post-MVP,
-   "Info de repartidor en tracking".
-2. **Mecánica de alta de negocio**: auto-servicio con aprobación del
-   super-admin vs. solo por invitación. Ver Fase 10.
-3. **Métrica "Ganancia"** del resumen del owner: recortarla (solo ventas)
-   vs. agregar costo por producto al modelo. Ver Fase 13.
-4. **Notificaciones promocionales in-app**: alcance del opt-out en la fila
-   "Notificaciones" de Perfil (hoy no hay push promocional). Ver Fase 7.
+### Abiertas
+
+- **D1 — Repartidor/courier**: ¿recorte permanente (los negocios entregan
+  con su propia gente) o entidad futura del modelo? Ver Backlog post-MVP,
+  "Info de repartidor en tracking".
+- **D3 — Métrica "Ganancia"** del resumen del owner: recortarla (solo
+  ventas) vs. agregar costo por producto al modelo. Ver Fase 13.
+- **D4 — Notificaciones promocionales in-app**: alcance del opt-out en la
+  fila "Notificaciones" de Perfil (hoy no hay push promocional). Ver Fase 7.
+
+### Resueltas
+
+- **D2 — Mecánica de alta de negocio** (resuelta 2026-07-24): **opción
+  B — solo por invitación**. El super-admin crea el negocio y asigna el
+  owner manualmente (runbook manual documentado en
+  `docs/phases/phase-10-owner-foundations.md` hasta que exista el chore de
+  BE `POST /platform/businesses`); el auto-servicio con aprobación queda
+  como Fase 15 (post-MVP), junto con la pantalla "Crear negocio" y el
+  botón "¿Tenés un negocio?" del prototipo. Ver Fase 10 y Fase 15.
 
 ## Publicación (Fase 9 — checklist)
 
